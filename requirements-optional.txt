@@ -1,0 +1,8 @@
+# Optional: enables the 8-bit Adam configs (optimizer sweep + the "8-bit Adam" and
+# "both" bars in the combined sweep). If this isn't installed, benchmark.py skips
+# those configs gracefully -- rows aren't produced for them, nothing crashes.
+#
+# bitsandbytes needs a CUDA-matched wheel and is proxy-sensitive to install in this
+# environment; install separately and only if the proxy allows it:
+#   pip install -r requirements-optional.txt
+bitsandbytes>=0.41

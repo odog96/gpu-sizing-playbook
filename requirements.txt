@@ -1,0 +1,13 @@
+# Minimum dependencies to run the training-memory benchmark and its charts.
+# Pinned loosely (>=) so this resolves against whatever's already in the CML runtime
+# rather than forcing a reinstall behind the proxy.
+
+# Builds the model, runs the training loop, measures CUDA memory. Check what's already
+# installed first (`python -c "import torch; print(torch.__version__)"`) -- if a CUDA
+# build is already present in the CML runtime, this line is a no-op for pip.
+torch>=2.0
+
+# plot_results.py's only two non-stdlib imports: pandas to load/filter results.csv,
+# matplotlib to render the charts. Neither is optional -- both are used directly.
+pandas>=2.0
+matplotlib>=3.5
