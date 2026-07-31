@@ -38,7 +38,7 @@ PALETTE = {
     "axis": "#c3c2b7",
 }
 
-A100_80GB_CAPACITY_GB = 80.0
+GPU_80GB_CAPACITY_GB = 80.0
 LINE_ITEM_ORDER = ["weights", "gradients", "optimizer", "autocast_weight_cache", "activations"]
 LINE_ITEM_LABELS = {
     "weights": "Weights", "gradients": "Gradients", "optimizer": "Optimizer",
@@ -62,8 +62,11 @@ def _save(fig, outdir, name):
     fig.tight_layout()
     png_path = os.path.join(outdir, f"{name}.png")
     svg_path = os.path.join(outdir, f"{name}.svg")
-    fig.savefig(png_path, dpi=200)
-    fig.savefig(svg_path)
+    # bbox_inches="tight" grows the canvas to include anything placed outside the
+    # axes (e.g. the memory-vs-lever legend, parked to the right of the plot so it
+    # can never collide with tall bars).
+    fig.savefig(png_path, dpi=200, bbox_inches="tight")
+    fig.savefig(svg_path, bbox_inches="tight")
     plt.close(fig)
     return png_path, svg_path
 
@@ -90,7 +93,7 @@ def plot_memory_vs_lever(df, lever, title, xlabel, outdir, name, show_floor_line
                label=LINE_ITEM_LABELS[item], zorder=2, edgecolor="white", linewidth=0.5)
         bottom = [b + v for b, v in zip(bottom, values)]
 
-    ceiling = max(max(bottom), sub["max_reserved_gb"].apply(_safe_float).fillna(0).max(), A100_80GB_CAPACITY_GB * 0.3)
+    ceiling = max(max(bottom), sub["max_reserved_gb"].apply(_safe_float).fillna(0).max(), GPU_80GB_CAPACITY_GB * 0.3)
     for xi, (_, row) in zip(x, sub.iterrows()):
         if row["oom"]:
             _hatch_oom_bar(ax, xi, ceiling * 1.15, 0.55)
@@ -111,7 +114,9 @@ def plot_memory_vs_lever(df, lever, title, xlabel, outdir, name, show_floor_line
     ax.set_xlabel(xlabel, fontsize=11)
     ax.set_title(title, fontsize=13, pad=12)
     _style_axes(ax)
-    ax.legend(frameon=False, fontsize=9.5, loc="upper left", ncol=2)
+    # Legend outside the axes: the stacked bars (and OOM hatches) can reach the top
+    # of the plot at any x position, so any in-axes placement risks a collision.
+    ax.legend(frameon=False, fontsize=9.5, loc="upper left", bbox_to_anchor=(1.01, 1.0))
     return _save(fig, outdir, name)
 
 
@@ -147,7 +152,7 @@ def plot_lever_impact(df, outdir):
     for yi, (_, row), color in zip(y, combined.iterrows(), colors):
         reserved = _safe_float(row["max_reserved_gb"])
         if row["oom"] or reserved is None:
-            _hatch_oom_bar_h(ax, yi, A100_80GB_CAPACITY_GB, 0.6)
+            _hatch_oom_bar_h(ax, yi, GPU_80GB_CAPACITY_GB, 0.6)
         else:
             ax.barh(yi, reserved, height=0.6, color=color, zorder=2)
             step_ms = _safe_float(row["step_time_mean_ms"])
@@ -161,8 +166,8 @@ def plot_lever_impact(df, outdir):
                     text = f"{sign}{pct:.0f}% step time{suffix}"
                 ax.text(reserved + 1.0, yi, text, va="center", fontsize=9.5, color=PALETTE["text_muted"])
 
-    ax.axvline(A100_80GB_CAPACITY_GB, color=PALETTE["capacity_line"], linewidth=1.3, linestyle=":", zorder=1)
-    ax.text(A100_80GB_CAPACITY_GB, len(combined) - 0.3, " A100 80GB", color=PALETTE["capacity_line"],
+    ax.axvline(GPU_80GB_CAPACITY_GB, color=PALETTE["capacity_line"], linewidth=1.3, linestyle=":", zorder=1)
+    ax.text(GPU_80GB_CAPACITY_GB, len(combined) - 0.3, " H100 80GB", color=PALETTE["capacity_line"],
             fontsize=9.5, va="top")
 
     ax.set_yticks(list(y))
@@ -187,8 +192,8 @@ def _hatch_oom_bar_h(ax, y, ceiling, height):
 def plot_allocated_vs_reserved(df, outdir):
     sub = df.copy()
     sub["label"] = sub["lever"] + ": " + sub["lever_value"].astype(str)
-    ceiling = max(_safe_float(v) or 0 for v in sub["max_reserved_gb"]) or A100_80GB_CAPACITY_GB
-    ceiling = max(ceiling, A100_80GB_CAPACITY_GB * 0.3)
+    ceiling = max(_safe_float(v) or 0 for v in sub["max_reserved_gb"]) or GPU_80GB_CAPACITY_GB
+    ceiling = max(ceiling, GPU_80GB_CAPACITY_GB * 0.3)
 
     fig, ax = plt.subplots(figsize=(7.5, max(4.5, 0.34 * len(sub))))
     y = list(range(len(sub)))
