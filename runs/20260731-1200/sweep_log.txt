@@ -1,0 +1,137 @@
+[1/24] baseline=baseline (d=2048 layers=20 batch=256 seq=100 amp_bf16 adam ckpt=False)
+  -> 59.22 GB allocated
+[2/24] batch_size=256 (d=2048 layers=20 batch=256 seq=100 amp_bf16 adam ckpt=False)
+  -> 59.22 GB allocated
+[3/24] batch_size=1024 (d=2048 layers=20 batch=1024 seq=100 amp_bf16 adam ckpt=False)
+  | [W731 18:02:29.190218558 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 1677721600 bytes (free: 58916864, total: 85017493504).
+  | [W731 18:02:29.190349618 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 1677721600 bytes (free: 58916864, total: 85017493504).
+  | [child] OOM at batch_size=1024: CUDA out of memory. Tried to allocate 1.56 GiB. GPU 0 has a total capacity of 79.18 GiB of which 56.19 MiB is free. Including non-PyTorch memory, this process has 79.12 GiB memory in use. Of the allocated memory 77.53 GiB is allocated by PyTorch, and 940.61 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+  -> OOM
+[4/24] batch_size=4096 (d=2048 layers=20 batch=4096 seq=100 amp_bf16 adam ckpt=False)
+  | [W731 18:02:37.961042472 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 6710886400 bytes (free: 6346178560, total: 85017493504).
+  | [W731 18:02:37.961311326 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 6710886400 bytes (free: 6346178560, total: 85017493504).
+  | [child] OOM at batch_size=4096: CUDA out of memory. Tried to allocate 6.25 GiB. GPU 0 has a total capacity of 79.18 GiB of which 5.91 GiB is free. Including non-PyTorch memory, this process has 73.26 GiB memory in use. Of the allocated memory 65.74 GiB is allocated by PyTorch, and 6.86 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+  -> OOM
+[5/24] seq_len=100 (d=2048 layers=20 batch=256 seq=100 amp_bf16 adam ckpt=False)
+  -> 59.22 GB allocated
+[6/24] seq_len=512 (d=2048 layers=20 batch=256 seq=512 amp_bf16 adam ckpt=False)
+  | [W731 18:02:56.953968641 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 2147483648 bytes (free: 715325440, total: 85017493504).
+  | [W731 18:02:56.954131306 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 2147483648 bytes (free: 715325440, total: 85017493504).
+  | [child] OOM at seq_len=512: CUDA out of memory. Tried to allocate 2.00 GiB. GPU 0 has a total capacity of 79.18 GiB of which 682.19 MiB is free. Including non-PyTorch memory, this process has 78.50 GiB memory in use. Of the allocated memory 76.75 GiB is allocated by PyTorch, and 1.10 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+  -> OOM
+[7/24] seq_len=1024 (d=2048 layers=20 batch=256 seq=1024 amp_bf16 adam ckpt=False)
+  | [W731 18:03:03.740422169 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 3221225472 bytes (free: 1768095744, total: 85017493504).
+  | [W731 18:03:03.740556748 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 3221225472 bytes (free: 1768095744, total: 85017493504).
+  | [child] OOM at seq_len=1024: CUDA out of memory. Tried to allocate 3.00 GiB. GPU 0 has a total capacity of 79.18 GiB of which 1.65 GiB is free. Including non-PyTorch memory, this process has 77.52 GiB memory in use. Of the allocated memory 75.18 GiB is allocated by PyTorch, and 1.69 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+  -> OOM
+[8/24] seq_len=2048 (d=2048 layers=20 batch=256 seq=2048 amp_bf16 adam ckpt=False)
+  | [W731 18:03:11.582344003 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 8589934592 bytes (free: 2839740416, total: 85017493504).
+  | [W731 18:03:11.582543752 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 8589934592 bytes (free: 2839740416, total: 85017493504).
+  | [child] OOM at seq_len=2048: CUDA out of memory. Tried to allocate 8.00 GiB. GPU 0 has a total capacity of 79.18 GiB of which 2.64 GiB is free. Including non-PyTorch memory, this process has 76.53 GiB memory in use. Of the allocated memory 71.06 GiB is allocated by PyTorch, and 4.81 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+  -> OOM
+[9/24] optimizer=adam (d=2048 layers=20 batch=256 seq=100 amp_bf16 adam ckpt=False)
+  -> 59.22 GB allocated
+[10/24] optimizer=adam8bit (d=2048 layers=20 batch=256 seq=100 amp_bf16 adam8bit ckpt=False)
+  -> 53.18 GB allocated
+[11/24] checkpointing=False (d=2048 layers=20 batch=256 seq=100 amp_bf16 adam ckpt=False)
+  -> 59.22 GB allocated
+[12/24] checkpointing=True (d=2048 layers=20 batch=256 seq=100 amp_bf16 adam ckpt=True)
+  -> 20.35 GB allocated
+[13/24] checkpointing_batch=256 (d=2048 layers=20 batch=256 seq=100 amp_bf16 adam ckpt=True)
+  -> 20.35 GB allocated
+[14/24] checkpointing_batch=1024 (d=2048 layers=20 batch=1024 seq=100 amp_bf16 adam ckpt=True)
+  -> 40.03 GB allocated
+[15/24] checkpointing_batch=4096 (d=2048 layers=20 batch=4096 seq=100 amp_bf16 adam ckpt=True)
+  | [W731 18:04:42.742037271 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 6710886400 bytes (free: 6346178560, total: 85017493504).
+  | [W731 18:04:44.082182319 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 6710886400 bytes (free: 1313013760, total: 85017493504).
+  | [W731 18:04:44.082346091 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 6710886400 bytes (free: 1313013760, total: 85017493504).
+  | [child] OOM at checkpointing_batch=4096: CUDA out of memory. Tried to allocate 6.25 GiB. GPU 0 has a total capacity of 79.18 GiB of which 1.22 GiB is free. Including non-PyTorch memory, this process has 77.95 GiB memory in use. Of the allocated memory 70.90 GiB is allocated by PyTorch, and 6.38 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+  -> OOM
+[16/24] checkpointing_seq=100 (d=2048 layers=20 batch=256 seq=100 amp_bf16 adam ckpt=True)
+  -> 20.35 GB allocated
+[17/24] checkpointing_seq=512 (d=2048 layers=20 batch=256 seq=512 amp_bf16 adam ckpt=True)
+  -> 47.79 GB allocated
+[18/24] checkpointing_seq=1024 (d=2048 layers=20 batch=256 seq=1024 amp_bf16 adam ckpt=True)
+  | [W731 18:05:39.711121956 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 4294967296 bytes (free: 2781020160, total: 85017493504).
+  | [W731 18:05:39.711290300 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 4294967296 bytes (free: 2781020160, total: 85017493504).
+  | [child] OOM at checkpointing_seq=1024: CUDA out of memory. Tried to allocate 4.00 GiB. GPU 0 has a total capacity of 79.18 GiB of which 2.59 GiB is free. Including non-PyTorch memory, this process has 76.58 GiB memory in use. Of the allocated memory 69.45 GiB is allocated by PyTorch, and 6.40 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+  -> OOM
+[19/24] checkpointing_seq=2048 (d=2048 layers=20 batch=256 seq=2048 amp_bf16 adam ckpt=True)
+  | [W731 18:05:47.540651734 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 8589934592 bytes (free: 2839740416, total: 85017493504).
+  | [W731 18:05:49.984580840 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 8589934592 bytes (free: 4987224064, total: 85017493504).
+  | [child] OOM at checkpointing_seq=2048: CUDA out of memory. Tried to allocate 8.00 GiB. GPU 0 has a total capacity of 79.18 GiB of which 4.64 GiB is free. Including non-PyTorch memory, this process has 74.53 GiB memory in use. Of the allocated memory 64.73 GiB is allocated by PyTorch, and 9.13 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+  -> OOM
+[20/24] combined=baseline (d=2048 layers=20 batch=4096 seq=2048 amp_bf16 adam ckpt=False)
+  | [W731 18:05:56.556794243 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 68719476736 bytes (free: 11446452224, total: 85017493504).
+  | [W731 18:05:56.557257543 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 68719476736 bytes (free: 11446452224, total: 85017493504).
+  | [child] OOM at combined=baseline: CUDA out of memory. Tried to allocate 64.00 GiB. GPU 0 has a total capacity of 79.18 GiB of which 10.66 GiB is free. Including non-PyTorch memory, this process has 68.51 GiB memory in use. Of the allocated memory 67.91 GiB is allocated by PyTorch, and 6.34 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+  -> OOM
+[21/24] combined=adam8bit (d=2048 layers=20 batch=4096 seq=2048 amp_bf16 adam8bit ckpt=False)
+  | [W731 18:06:05.927519884 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 68719476736 bytes (free: 11446452224, total: 85017493504).
+  | [W731 18:06:05.927907241 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 68719476736 bytes (free: 11446452224, total: 85017493504).
+  | [child] OOM at combined=adam8bit: CUDA out of memory. Tried to allocate 64.00 GiB. GPU 0 has a total capacity of 79.18 GiB of which 10.66 GiB is free. Including non-PyTorch memory, this process has 68.51 GiB memory in use. Of the allocated memory 67.91 GiB is allocated by PyTorch, and 6.34 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+  -> OOM
+[22/24] combined=checkpointing (d=2048 layers=20 batch=4096 seq=2048 amp_bf16 adam ckpt=True)
+  | [W731 18:06:12.647120767 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 68719476736 bytes (free: 11446452224, total: 85017493504).
+  | [W731 18:06:12.647597817 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 68719476736 bytes (free: 11446452224, total: 85017493504).
+  | [child] OOM at combined=checkpointing: CUDA out of memory. Tried to allocate 64.00 GiB. GPU 0 has a total capacity of 79.18 GiB of which 10.66 GiB is free. Including non-PyTorch memory, this process has 68.51 GiB memory in use. Of the allocated memory 67.91 GiB is allocated by PyTorch, and 6.34 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+  -> OOM
+[23/24] combined=both (d=2048 layers=20 batch=4096 seq=2048 amp_bf16 adam8bit ckpt=True)
+  | [W731 18:06:21.948626124 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 68719476736 bytes (free: 11446452224, total: 85017493504).
+  | [W731 18:06:21.949029097 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 68719476736 bytes (free: 11446452224, total: 85017493504).
+  | [child] OOM at combined=both: CUDA out of memory. Tried to allocate 64.00 GiB. GPU 0 has a total capacity of 79.18 GiB of which 10.66 GiB is free. Including non-PyTorch memory, this process has 68.51 GiB memory in use. Of the allocated memory 67.91 GiB is allocated by PyTorch, and 6.34 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+  -> OOM
+[24/24] precision=fp32 (d=2048 layers=20 batch=256 seq=100 fp32 adam ckpt=False)
+  | [W731 18:06:32.238594778 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 629145600 bytes (free: 63111168, total: 85017493504).
+  | [W731 18:06:32.238742618 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 629145600 bytes (free: 63111168, total: 85017493504).
+  | [child] OOM at precision=fp32: CUDA out of memory. Tried to allocate 600.00 MiB. GPU 0 has a total capacity of 79.18 GiB of which 60.19 MiB is free. Including non-PyTorch memory, this process has 79.11 GiB memory in use. Of the allocated memory 77.72 GiB is allocated by PyTorch, and 687.84 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+  -> OOM
+
+Wrote 24 rows to results.csv
+
+=== Summary (grouped by lever) ===
+
+[baseline]
+      baseline: allocated=59.22 GB  reserved=60.17 GB  predicted=60.40 GB  ratio=0.98
+
+[batch_size]
+           256: allocated=59.22 GB  reserved=60.17 GB  predicted=60.40 GB  ratio=0.98
+          1024: OOM  (correctly predicted)
+          4096: OOM  (correctly predicted)
+
+[checkpointing]
+         False: allocated=59.22 GB  reserved=60.17 GB  predicted=60.40 GB  ratio=0.98
+          True: allocated=20.35 GB  reserved=26.46 GB  predicted=22.66 GB  ratio=0.898  <-- predicted allocated outside +/-10% of measured
+
+[checkpointing_batch]
+           256: allocated=20.35 GB  reserved=26.46 GB  predicted=22.66 GB  ratio=0.898  <-- predicted allocated outside +/-10% of measured
+          1024: allocated=40.03 GB  reserved=44.39 GB  predicted=36.01 GB  ratio=1.112  <-- predicted allocated outside +/-10% of measured
+          4096: OOM  (correctly predicted)
+
+[checkpointing_seq]
+           100: allocated=20.35 GB  reserved=26.46 GB  predicted=22.66 GB  ratio=0.898  <-- predicted allocated outside +/-10% of measured
+           512: allocated=47.79 GB  reserved=51.37 GB  predicted=41.00 GB  ratio=1.166  <-- predicted allocated outside +/-10% of measured
+          1024: OOM  <-- NOT predicted by the formula
+          2048: OOM  (correctly predicted)
+
+[combined]
+      baseline: OOM  (correctly predicted)
+      adam8bit: OOM  (correctly predicted)
+  checkpointing: OOM  (correctly predicted)
+          both: OOM  (correctly predicted)
+
+[optimizer]
+          adam: allocated=59.22 GB  reserved=60.17 GB  predicted=60.40 GB  ratio=0.98
+      adam8bit: allocated=53.18 GB  reserved=54.29 GB  predicted=54.34 GB  ratio=0.979
+
+[precision]
+          fp32: OOM  (correctly predicted)
+
+[seq_len]
+           100: allocated=59.22 GB  reserved=60.17 GB  predicted=60.40 GB  ratio=0.98
+           512: OOM  (correctly predicted)
+          1024: OOM  (correctly predicted)
+          2048: OOM  (correctly predicted)
+
+[activation multiplier vs. sequence length]  (measured activations / predicted floor)
+  seq_len=  100: measured~=42.92 GB  predicted_floor=42.20 GB  multiplier=1.02x

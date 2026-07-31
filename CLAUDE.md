@@ -25,7 +25,7 @@ All commands run from `benchmark/`.
 # CPU-only: formulas, sweep enumeration, param-count math, chart generation
 python -m unittest discover -s tests              # full suite
 python -m unittest tests.test_predictions          # single module
-python -m unittest tests.test_predictions.TestActivationFormula.test_baseline_matches_hand_derivation  # single test
+python -m unittest tests.test_predictions.TestActivationFormula.test_baseline_config_matches_hand_derived_per_tensor_sum  # single test
 python plot_results.py --input fixtures/results_sample.csv --outdir /tmp/charts
 python validate_results.py --input fixtures/results_sample.csv
 
