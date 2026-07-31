@@ -130,15 +130,39 @@ below.
 > tabular regression head) — swap in whatever your real output layer produces. It's
 > usually small relative to the L-layer accumulated total either way.
 
-**Checkpointed:**
+**Checkpointed** (rewritten 2026-07-31 after a CUDA allocator-history replay on a real
+H100 identified every live block at the peak moment — see §5 for the upgraded
+confidence):
 
-> Checkpointed activations = L·(B·S·d·b)  +  [one layer's full non-checkpointed subtotal]  +  once-per-model terms
+> Checkpointed activations (backward peak) = (L+3)·(B·S·d·**4**)  +  7·(B·S·d·b)  +  3·(B·S·f·d·b)  +  B·S·d  +  B·S·V·b
 
-The first term is what checkpointing *saves* (just each layer's input boundary,
-recomputed on demand). The second term is a real, if brief, transient: during backward,
-one layer at a time gets recomputed forward (with gradients on) and then immediately
-backpropagated — while that's happening, that one layer transiently holds its full
-working set on top of everything else already resident.
+Two facts the earlier version of this formula got wrong, both mechanisms now named:
+
+- **The saved layer boundaries are fp32, not bf16.** Under autocast, LayerNorm and the
+  residual adds run in fp32, so the tensor passed *between* layers — exactly what
+  checkpointing saves — is 4 bytes/element even in bf16 mode. The earlier formula used
+  the 2-byte compute dtype, halving the dominant term. The +3 beyond L: the segment
+  being recomputed re-saves its norm tensors, and the incoming gradient w.r.t. the
+  segment output is the same shape.
+- **Peak timing matters once activations shrink.** Whole-run peak allocated is the max
+  of three phase peaks, not a sum:
+  1. *Backward-recompute peak* = weights + optimizer state + the activation expression
+     above. No weight gradients yet (they haven't accumulated at this moment), no
+     autocast weight cache (freed when the forward pass exited autocast).
+  2. *Optimizer-step peak* = weights + gradients + optimizer state + one extra
+     parameter-sized set of temporaries that torch's default (foreach) Adam
+     materializes = 4+4+8+4 = **20 bytes/param** for standard Adam (8-bit Adam updates
+     in place — no temporaries). This floor dominates at small B·S: it's why the
+     measured checkpointed baseline is ~20.35 GB, not the ~19 GB the backward peak
+     alone implies.
+  3. *Forward peak* = weights + optimizer state + autocast cache + L fp32 boundaries +
+     one segment's forward transient + logits terms. Rarely dominant, matters for
+     8-bit-Adam-with-checkpointing configs where the optimizer floor is low.
+
+Validated against the 2026-07-31 24-config H100 sweep: the four checkpointing rows
+that previously missed at 10–14% error all land within **0.6%**, and the one wrong OOM
+call (checkpointing at seq=1024: predicted fits, actually OOMed) is now called
+correctly — with zero tuned constants.
 
 ---
 
@@ -199,7 +223,7 @@ capacity — that's what the OOM call in `validate_results.py` does.
 | Activation formula, non-checkpointed | **High at small-to-moderate scale** | Baseline config validated to 2.1% against real GPU data |
 | Attention-probability-matrix = 0 | **High** | Confirmed via source (this code's attention call forces the flash/SDPA path) *and* empirically ruled out the alternative using this sweep's own OOM data (a materialized matrix would demand ~550 GB, not the observed ~68 GB) |
 | Dropout mask term | **Speculative** | Assumes masks are materialized as byte tensors; some fused CUDA dropout kernels instead save only RNG state, which would make this term ~0. Not yet isolated. It's a small fraction of the total either way. |
-| Activation formula, checkpointed | **Medium** | One real data point, 11.6% over-prediction, not tuned away on purpose (see below) |
+| Activation formula, checkpointed | **High** | Rebuilt 2026-07-31 from a CUDA allocator-history replay (every live block at peak identified by exact byte size); validates within 0.6% on all four non-OOM checkpointed H100 rows and fixes the one wrong OOM call |
 | batch/seq combinations beyond what's been measured (incl. all batch=1,024/4,096 numbers in §3) | **Extrapolated, unverified** | Formula only, no GPU measurement at these exact points yet |
 | CUDA context + fragmentation constants | **Order-of-magnitude, not derived** | Structurally invisible to `torch`'s memory API; fragmentation figure is a single data point |
 

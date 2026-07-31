@@ -65,6 +65,16 @@ class TestActivationFormula(unittest.TestCase):
         self.assertGreater(checkpointed_gb, old_buggy_checkpointed_gb * 10)
         self.assertLess(checkpointed_gb * GB, full)
 
+    def test_checkpointed_saved_boundaries_are_fp32_per_tensor_sum(self):
+        # Hand-derived from the 2026-07-31 H100 allocator-history replay at baseline
+        # scale (B=256, S=100, d=2048, L=20, ff_mult=4, vocab=1000, amp_bf16):
+        #   (L+3) fp32 boundaries: 23 * 256*100*2048*4 = 4.8234 GB
+        #   recompute working set: (7*bsd + 3*bsfd) bf16 = 0.7340 + 1.2583 GB
+        #   one dropout mask (1 byte): 0.0524 GB; live logits bf16: 0.0512 GB
+        # Total: 6.9194 GB.
+        ckpt_gb = predict_activation_bytes(256, 100, 2048, 20, 4, 1000, "amp_bf16", checkpointing=True) / GB
+        self.assertAlmostEqual(ckpt_gb, 6.9194, places=3)
+
     def test_fp32_precision_uses_4_byte_activations_and_no_upcast_term(self):
         bf16_gb = predict_activation_bytes(256, 100, 2048, 20, 4, 1000, "amp_bf16", checkpointing=False) / GB
         fp32_gb = predict_activation_bytes(256, 100, 2048, 20, 4, 1000, "fp32", checkpointing=False) / GB
@@ -84,6 +94,43 @@ class TestLineItemsAndOomPrediction(unittest.TestCase):
         measured_allocated_gb = 59.1452  # from results.csv, baseline row
         pct_error = abs(predicted_allocated_gb - measured_allocated_gb) / measured_allocated_gb
         self.assertLess(pct_error, 0.10)
+
+    def test_checkpointed_rows_match_h100_measured_within_2pct(self):
+        # Measured max_allocated_gb from the 2026-07-31 H100 sweep (runs/20260731-1200).
+        # These three rows were the old formula's 10-14% misses; the phase-peak model
+        # must land within 2% on all of them, with no tuned constants.
+        rows = [
+            # (n_params, batch, seq_len, measured_gb)
+            (1_011_262_440, 256, 100, 20.3462),   # baseline ckpt (optimizer-step peak)
+            (1_011_262_440, 1024, 100, 40.0338),  # ckpt x batch (backward-recompute peak)
+            (1_011_262_440, 256, 512, 47.7896),   # ckpt x seq   (backward-recompute peak)
+        ]
+        for n_params, batch, seq_len, measured_gb in rows:
+            predicted = predict_line_items(
+                n_params, "amp_bf16", "adam", batch, seq_len, 2048, 20, 4, 1000, checkpointing=True
+            )
+            pct_error = abs(predicted["allocated_total"] / GB - measured_gb) / measured_gb
+            self.assertLess(pct_error, 0.02, f"B={batch} S={seq_len}: {predicted['allocated_total']/GB:.2f} vs {measured_gb}")
+
+    def test_checkpointed_baseline_peak_is_the_optimizer_step_not_activations(self):
+        # At small batch*seq the backward-recompute peak (~19.1 GB) is below the
+        # foreach-Adam optimizer-step floor (4+4+8+4 bytes/param ~= 20.2 GB). The old
+        # formula missed this entirely -- it's why the checkpointed baseline measured
+        # ~20.35 GB, not ~19 GB.
+        predicted = predict_line_items(
+            1_011_262_440, "amp_bf16", "adam", 256, 100, 2048, 20, 4, 1000, checkpointing=True
+        )
+        expected_opt_peak_gb = 1_011_262_440 * 20 / GB  # 4+4+8+4 bytes/param
+        self.assertAlmostEqual(predicted["allocated_total"] / GB, expected_opt_peak_gb, places=3)
+
+    def test_checkpointing_seq_1024_now_correctly_predicts_oom(self):
+        # The one OOM call the old formula got wrong (predicted 63.8 GB allocated ->
+        # "fits"; the real run OOMed). The corrected backward-peak model puts allocated
+        # at ~83 GB, pushing reserved past the ~85.1 GB (79.25 GiB) capacity.
+        predicted = predict_line_items(
+            1_010_728_960, "amp_bf16", "adam", 256, 1024, 2048, 20, 4, 1000, checkpointing=True
+        )
+        self.assertTrue(predicted["predicted_oom"])
 
     def test_demanding_combined_config_correctly_predicts_oom(self):
         predicted = predict_line_items(

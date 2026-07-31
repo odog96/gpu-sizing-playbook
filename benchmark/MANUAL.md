@@ -129,7 +129,9 @@ Config fields (`d`, `layers`, `batch`, `seq_len`, `precision`, `optimizer`,
 - **Predicted** (`predictions.py`, per-tensor formulas): `predicted_weights_gb`,
   `predicted_gradients_gb`, `predicted_optimizer_gb`, `predicted_autocast_weight_cache_gb`
   (nonzero only under `amp_bf16`), `predicted_activations_gb`, `predicted_allocated_gb`
-  (sum of the above -- compare to `max_allocated_gb`), `predicted_reserved_gb`
+  (non-checkpointed: sum of the above; checkpointed: max of three phase peaks --
+  backward-recompute, optimizer-step, forward -- see `predict_line_items` in
+  `predictions.py`; compare to `max_allocated_gb`), `predicted_reserved_gb`
   (`predicted_allocated_gb` + a documented CUDA-context + fragmentation allowance --
   compare to `max_reserved_gb`), `predicted_oom` (`predicted_reserved_gb` over the
   fleet's ~79.25 GiB usable capacity).

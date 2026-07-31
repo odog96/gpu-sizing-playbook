@@ -125,17 +125,32 @@ def predict_activation_bytes(batch, seq_len, d_model, n_layers, ff_mult, vocab, 
     if not checkpointing:
         return per_layer_total * n_layers + once_total
 
-    # Checkpointing saves only each layer's input (the recomputation boundary) instead of
-    # every intermediate tensor, so the steady-state resident cost is n_layers copies of
-    # one B*S*d tensor. But during backward, one layer at a time is recomputed forward
-    # (with grad tracking on) and then immediately backpropagated through -- while that's
-    # happening, that one layer transiently holds its *full* non-checkpointed working set
-    # on top of everything else already resident. That transient is a real, if brief,
-    # peak, not an approximation error.
+    # Checkpointed: the resident activation set at the backward-pass peak, term by term
+    # as observed in a CUDA allocator-history replay on a real H100 (2026-07-31; each
+    # live block at the peak moment identified by its exact byte size). Two facts the
+    # old formula got wrong, both now named:
+    #
+    # (a) The saved layer boundaries are fp32, not compute-dtype: under autocast,
+    #     LayerNorm and the residual adds run in fp32, so the tensor passed *between*
+    #     layers -- exactly what checkpointing saves -- is always 4 bytes/element, even
+    #     in amp_bf16 mode. (The old formula used the 2-byte compute dtype, halving the
+    #     dominant term.)
+    # (b) The peak lands early in backward, while the last segment is being recomputed:
+    #     all n_layers saved boundaries are still resident, plus 3 more same-shaped fp32
+    #     tensors (the recomputed segment's re-saved norm tensors and the incoming
+    #     gradient w.r.t. the segment output), plus the recomputed segment's bf16
+    #     working set (7 B*S*d tensors + 3 B*S*ff_mult*d MLP-hidden tensors), one
+    #     dropout mask, and the still-live logits. Weight gradients have NOT accumulated
+    #     yet at this moment -- they're accounted for in predict_line_items' phase
+    #     logic, not here.
+    residual_boundary_fp32 = batch * seq_len * d_model * 4
+    saved_boundaries = (n_layers + 3) * residual_boundary_fp32
     bsd = batch * seq_len * d_model * b
-    saved_boundaries = n_layers * bsd
-    recompute_peak = per_layer_total  # one layer's full working set, not n_layers worth
-    return saved_boundaries + recompute_peak + once_total
+    bsfd = batch * seq_len * (ff_mult * d_model) * b
+    recompute_working_set = 7 * bsd + 3 * bsfd
+    dropout_mask = batch * seq_len * d_model  # 1 byte/element
+    live_logits = batch * seq_len * vocab * b
+    return saved_boundaries + recompute_working_set + dropout_mask + live_logits
 
 
 # --- Terms that live outside PyTorch's own tensor accounting ---
@@ -172,7 +187,41 @@ def predict_line_items(n_params, precision, optimizer, batch, seq_len, d_model, 
     autocast_cache = predict_autocast_weight_cache_bytes(n_params, precision)
     activations = predict_activation_bytes(batch, seq_len, d_model, n_layers, ff_mult, vocab, precision, checkpointing)
 
-    allocated_total = weights + gradients + optimizer_bytes + autocast_cache + activations
+    if not checkpointing:
+        # Non-checkpointed: activations dominate so thoroughly that the peak is simply
+        # everything at once -- the plain sum validates within ~2% on real sweeps.
+        allocated_total = weights + gradients + optimizer_bytes + autocast_cache + activations
+    else:
+        # Checkpointed: activations shrink enough that *when* the peak happens matters.
+        # The true peak is the max of three named phase peaks (each verified against a
+        # CUDA allocator-history replay on a real H100, 2026-07-31):
+        #
+        # (1) Backward-recompute peak: the checkpointed activation set above, on top of
+        #     weights + optimizer state only -- weight gradients haven't accumulated yet
+        #     at this moment, and the autocast weight cache was freed when the forward
+        #     pass exited the autocast context.
+        backward_peak = weights + optimizer_bytes + activations
+        # (2) Optimizer-step peak: torch's default (foreach) Adam materializes roughly
+        #     one parameter-sized set of update temporaries on top of
+        #     weights + gradients + state. bitsandbytes' fused 8-bit Adam updates in
+        #     place, so it has no such set. This is the floor that dominates when
+        #     batch*seq is small (it's why the measured checkpointed baseline is ~20 GB
+        #     -- 4+4+8+4 bytes/param -- not the ~19 GB the backward peak alone implies).
+        foreach_adam_temps = gradients if optimizer == "adam" else 0
+        optimizer_step_peak = weights + gradients + optimizer_bytes + foreach_adam_temps
+        # (3) Forward peak: autocast weight cache live, all n_layers fp32 boundaries
+        #     saved, one segment's forward transient (2 MLP-hidden + packed QKV +
+        #     boundary), and the logits + fp32 loss upcast.
+        b = _activation_dtype_bytes(precision)
+        once = _once_per_model_bytes(batch, seq_len, d_model, vocab, precision, b)
+        segment_forward_transient = (2 * (ff_mult * d_model) + 3 * d_model) * batch * seq_len * b
+        forward_peak = (
+            weights + optimizer_bytes + autocast_cache
+            + n_layers * (batch * seq_len * d_model * 4)
+            + segment_forward_transient
+            + once["final_logits"] + once["logits_fp32_upcast"]
+        )
+        allocated_total = max(backward_peak, optimizer_step_peak, forward_peak)
     fragmentation = (CHECKPOINTING_FRAGMENTATION_GB if checkpointing else FRAGMENTATION_GB) * GB
     reserved_total = allocated_total + CUDA_CONTEXT_OVERHEAD_GB * GB + fragmentation
 
