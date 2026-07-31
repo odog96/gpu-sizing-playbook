@@ -34,7 +34,7 @@ All figures below use one worked configuration, carried through the whole articl
 | BF16 weight cache | 2.0 GB | None worth pulling — it buys BF16 compute speed; disappears in pure FP32 | Pure FP32 nearly doubles activation memory (calculated 1.85×) and forfeits the speedup |
 | Activations | ~43 GB | Activation checkpointing; smaller batch size; shorter sequence length | Activation checkpointing adds roughly a third to training time; smaller batches can slow or destabilize convergence; shorter sequences limit what the model can learn |
 
-Two observations. First, optimizer states are twice the weights — the largest static cost, and the one most often left out of a budget; weights, gradients, and optimizer state come to ~16 GB before activations enter the picture, ~18 GB once the BF16 cache materializes during the forward pass. Second, activations dominate everything else combined, and they are also where your cheapest lever lives.
+Two observations. First, optimizer states are twice the weights — the largest static cost, and the one most often left out of a budget; weights, gradients, and optimizer state come to ~16 GB before activations enter the picture (the 2.0 GB BF16 cache exists mid-forward but is released before the peak). Second, activations dominate everything else combined, and they are also where your cheapest lever lives.
 
 ---
 
@@ -75,7 +75,7 @@ If this line is your constraint, 8-bit Adam stores momentum and variance in 1 by
 
 ### The BF16 weight cache
 
-One small line item exists only under mixed precision: when autocast casts an FP32 weight to BF16 for a matrix multiply, it caches that BF16 copy for reuse across the rest of the forward pass. The cache is parameter count × 2 bytes — **2.0 GB** here (measured: disabling the cache lowers peak forward memory by 1.98 GB). It disappears in pure FP32 training, and there is no lever worth pulling on it: it is the cost of the BF16 compute speedup, and it releases as soon as the forward pass ends.
+One small line item exists only under mixed precision: when autocast casts an FP32 weight to BF16 for a matrix multiply, it caches that BF16 copy for reuse across the rest of the forward pass. The cache is parameter count × 2 bytes — **2.0 GB** here (measured in the checkpointed run's forward phase: disabling the cache lowers that peak by 1.98 GB). It disappears in pure FP32 training, and there is no lever worth pulling on it: it is the cost of the BF16 compute speedup, and it releases before the run's peak — the same toggle makes no measurable difference to the non-checkpointed peak, which lands in the backward pass after the cache is freed.
 
 ### Activations
 
@@ -89,7 +89,7 @@ Where:
 - **batch size** is examples processed simultaneously (256 here)  
 - **sequence length** is tokens per example (100 here)  
 - **hidden dimension** is the model's internal width (2,048 here)  
-- **bytes per element per layer** is the term that surprises people: roughly **40 bytes** without activation checkpointing (the per-tensor accounting gives exactly 40; the measured value implies ~41, the difference being small once-per-model terms)
+- **bytes per element per layer** is the term that surprises people: roughly **40 bytes** without activation checkpointing (the per-tensor accounting gives exactly 40; the measured value implies ~41 — once-per-model terms plus a residual under 2%)
 
 Worked configuration: 20 × 256 × 100 × 2,048 × 40 bytes ≈ **42 GB** (calculated: 42.2 GB; measured: 42.9 GB on an H100 80GB; see the note on measurement below).
 
@@ -107,7 +107,7 @@ For anyone coming from tabular machine learning, this is the trap. A batch of 25
 
 Both scale activation memory linearly. Halving either one halves this line item.
 
-Going from a batch size of 256 examples to 128 examples takes activations from roughly 43 GB to roughly 21.5 GB (calculated). The other three line items — weights, gradients, optimizer states — do not move at all. They stay at 16.1 GB combined (calculated; measured 16.3 GB).
+Going from a batch size of 256 examples to 128 examples takes activations from roughly 43 GB to roughly 21.5 GB (calculated). The other three line items — weights, gradients, optimizer states — do not move at all. They stay at 16.2 GB combined (calculated; measured 16.3 GB).
 
 Sequence length behaves the same way in the formula above, with one caveat. If your implementation stores the full attention probability matrix, memory grows with the square of sequence length rather than linearly, and long sequences get expensive fast. Memory-efficient attention implementations avoid storing that matrix. If long sequences are a requirement rather than a preference, confirming you have memory-efficient attention is the first thing to check.
 
@@ -142,7 +142,7 @@ Same worked configuration: 1.01 billion parameters, 20 layers, hidden dimension 
 | Weights | 4.0 GB | 4.0 GB |
 | Gradients | 4.0 GB | 4.0 GB |
 | Optimizer states | 8.1 GB | 8.1 GB |
-| BF16 weight cache | 2.0 GB | 2.0 GB (released before the peak) |
+| BF16 weight cache | 2.0 GB (released before the peak) | 2.0 GB (released before the peak) |
 | Activations | ~43 GB | ~7 GB (at their own peak) |
 | **Peak allocated (measured)** | **59.2 GB** | **20.3 GB** |
 | Allocator overhead: cached blocks and fragmentation (measured) | ~1.0 GB | ~6.1 GB |
@@ -150,7 +150,7 @@ Same worked configuration: 1.01 billion parameters, 20 layers, hidden dimension 
 
 Add roughly another 0.6 GB on top of the reserved figure for the CUDA context itself — driver and kernel-library state that lives outside the framework's memory counters entirely.
 
-The columns do not sum exactly to the peak, and that is not rounding: memory peaks at a *moment*, not as a ledger total. Without checkpointing, everything is resident at once near the end of the forward pass, so the sum is close. With checkpointing, the peak lands on the optimizer step — after the BF16 cache has been released and when almost no activations are alive — so the peak is the 20-bytes-per-parameter optimizer floor, not the column sum.
+The columns do not sum exactly to the peak, and that is not rounding: memory peaks at a *moment*, not as a ledger total. Without checkpointing, the peak lands early in the backward pass, while all activations are still alive but after the BF16 cache has been released, so the sum less the cache is close. With checkpointing, the peak lands on the optimizer step — when almost no activations are alive either — so the peak is the 20-bytes-per-parameter optimizer floor, not the column sum.
 
 The practical read: without activation checkpointing, this job needs an 80 GB card and has no room to grow. With it, the same job fits on a 40 GB card with headroom to raise the batch size. One configuration flag moved this training run across a hardware tier.
 
@@ -170,7 +170,7 @@ The measured fit boundaries for the worked 1B-parameter model on the 80 GB card 
 That table is the whole argument of this article in four cells: the same model, on the same card, either trains or cannot train depending on choices that cost nothing but a config flag — and each lever buys roughly one 4× step in batch or sequence before the wall moves back in.
 
 ![Memory vs. sequence length for the worked 1B-parameter model at batch 256, BF16 mixed precision: seq 100 fits in 59 GB measured; seq 512, 1,024, and 2,048 have predicted demand of 236, 452, and 884 GB against an 80 GB card](memory-vs-seqlen.png)  
-Sequence length is the fastest way to hit the wall (worked model, batch 256, BF16 mixed precision): the activation line grows linearly through predicted demands of 236, 452, and 884 GB at seq 512, 1,024, and 2,048 — the last of them eleven cards' worth — for what looks like a modest config change. The hatched bars are configurations that ran out of memory; the black diamond is the one that fit.
+Sequence length is the fastest way to hit the wall (worked model, batch 256, BF16 mixed precision): predicted total demand grows linearly through 236, 452, and 884 GB at seq 512, 1,024, and 2,048 — the last of them eleven cards' worth — for what looks like a modest config change. The hatched bars are configurations that ran out of memory; the black diamond is the one that fit.
 
 That is the pattern worth internalizing. The static line items are set by decisions you have probably already made — model size, optimizer, precision. The dynamic line item is set by decisions you can still change, and it is usually the one that determines what hardware you need.
 
@@ -178,14 +178,14 @@ That is the pattern worth internalizing. The static line items are set by decisi
 
 ## What these numbers do not cover
 
-Three honest caveats, because sizing from a number you do not understand is worse than not having it.
+A few caveats, and where the numbers come from.
 
 **Allocated versus reserved.** The formulas above predict *allocated* memory — bytes held by live tensors. What the driver actually takes from the card is *reserved* memory, which includes cached free blocks and fragmentation. Size your GPU against reserved. The measured gap was about 1 GB in the run without activation checkpointing and about 6 GB with it, since checkpointing frees and reallocates constantly and fragments the pool.
 
-**Ragged batches.** These numbers assume fixed-shape examples. Real batches have variable lengths, and peak memory is driven by the longest sequence in the batch, not the average. If you use dynamic padding, you will run hotter than these predictions.
+**Ragged batches.** These numbers assume fixed-shape examples. Real batches have variable lengths, and peak memory is driven by the longest sequence in the batch, not the average. If you size using your average sequence length, you will run hotter than these predictions.
 
 **Data pipeline memory.** The four line items account for the model. They do not account for your data sitting in GPU memory. GPU-resident pipelines — RAPIDS and cuDF in particular — can hold significant VRAM outside the model, and for smaller models that pipeline can be the dominant consumer. Budget for it separately.
 
 **A note on measurement.** Figures labeled measured come from a 24-configuration training benchmark on a single H100 80GB. The static line items are measured directly — by summing the actual bytes of every parameter, gradient, and optimizer tensor on the device — not inferred. Activations are the difference between two *measured* allocator readings (peak allocated minus allocated after optimizer setup). Peak composition claims (which tensors are alive at the peak moment) come from replaying the CUDA allocator's own event history.
 
-The companion spreadsheet turns this math into a sizing tool — plug in your model size, batch size, and precision, and it tells you whether the job fits on the GPU you have.  
+A companion spreadsheet will turn this math into a sizing tool — plug in your model size, batch size, and precision, and it tells you whether the job fits on the GPU you have.  

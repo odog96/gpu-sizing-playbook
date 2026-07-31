@@ -24,5 +24,5 @@ The series runs the bottom row of Figure 1 in reverse. We start with training be
 2. **Fine-tuning** — where the math gets friendlier.  
 3. **Inference** — where a different memory consumer, the KV cache, takes over.
 
-Each article ships with a working sizing tool.
+Each article will ship with a working sizing tool.
 
