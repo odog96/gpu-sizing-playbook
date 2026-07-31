@@ -8,15 +8,15 @@ What this article offers is a straightforward way to think about how pre-trainin
 
 This article covers training on a single GPU. Multi-GPU strategies are a separate article.
 
-Memory during a full training run comes down to four line items:
+Memory during a full training run comes down to four line items — plus one small fifth that exists only under mixed precision, flagged where it appears:
 
-**Weights.** The most straightforward. The number of parameters is the number of weights. Your storage precision tells you how many bytes each one takes — and here is the first trap: "BF16 training" almost always means BF16 *compute*, not BF16 *storage*. The stored weights stay in full 32-bit precision (4 bytes), so a 1-billion-parameter model needs about 4 GB to hold the weights, not the 2 GB the label suggests.
+**Weights.** The most straightforward. The number of parameters is the number of weights; storage precision sets how many bytes each one takes — 4 in practice, not the 2 that a "BF16 training" label suggests, for reasons covered below.
 
 **Gradients.** During the backward pass, each weight gets a gradient — the adjustment to apply to that weight. One gradient per weight, same formula as above.
 
-**Optimizer states.** The optimizer controls the learning rate dynamically, and to do that it needs history from earlier training steps. For Adam that history is two full-precision values per weight — momentum and variance — or 8 bytes per weight. (No separate "master copy" of the weights is needed when the weights themselves are already stored in full precision.)
+**Optimizer states.** Adaptive optimizers keep running statistics of past gradients to scale each weight's update. For Adam that history is two full-precision values per weight — momentum and variance — or 8 bytes per weight. (No separate "master copy" of the weights is needed when the weights themselves are already stored in full precision.)
 
-**Activations.** If you naively treat the weights in a model as the coefficients in a system of equations, the activations are the inputs flowing through at a given moment. (This is a stylized example — the real structure is more involved.) Memory here is a function of three choices: sequence length, how long your training examples are in tokens; batch size, how many examples you process at once; and activation checkpointing, which lets you keep a partial record of activations rather than all of them at once. That last one has outsized benefits, with a cost in training time.
+**Activations.** The intermediate tensors the forward pass must keep so the backward pass can compute gradients. Memory here is a function of three choices: sequence length, how long your training examples are in tokens; batch size, how many examples you process at once; and activation checkpointing, which lets you keep a partial record of activations rather than all of them at once. That last one has outsized benefits, with a cost in training time.
 
 The first three line items are static. They do not change whether your batch size is 1 or 4,096. The fourth is dynamic, and it is usually the largest number on the page — often by a wide margin.
 
@@ -24,17 +24,17 @@ The first three line items are static. They do not change whether your batch siz
 
 ## The line items, the levers, and what the levers cost
 
-All figures below use one worked configuration, carried through the whole article: **1.01 billion parameters, 20 layers, hidden dimension 2,048, sequence length 100 tokens, batch size 256 examples, BF16 mixed precision (BF16 compute, FP32 storage), standard Adam optimizer.** Figures labeled *measured* come from a 24-configuration benchmark of this model on an H100 80GB — see the note on measurement at the end.
+All figures below use one worked configuration, carried through the whole article: **1.01 billion parameters, 20 layers, hidden dimension 2,048, 16 attention heads, feed-forward width 4× the hidden dimension, output vocabulary 1,000, sequence length 100 tokens, batch size 256 examples, BF16 mixed precision (BF16 compute, FP32 storage), standard Adam optimizer.** Figures labeled *measured* come from a 24-configuration benchmark of this model on an H100 80GB — see the note on measurement at the end. Unlabeled figures in tables are calculated.
 
-| Line item | Memory | Levers to reduce it | What the lever costs you |
+| Line item | Memory (calculated) | Levers to reduce it | What the lever costs you |
 | :---- | :---- | :---- | :---- |
 | Weights | 4.0 GB | Fewer parameters; true low-precision storage (rare in training — see below) | A smaller model is a smaller model; low-precision storage risks training instability |
 | Gradients | 4.0 GB | Gradient accumulation across micro-batches | Trades wall-clock time for memory; the total memory saved comes from the smaller micro-batch, not from the gradients themselves |
 | Optimizer states | 8.1 GB | 8-bit Adam; a stateless optimizer such as SGD | 8-bit Adam carries a small accuracy risk; SGD often converges slower or to a worse result |
-| BF16 weight cache | 2.0 GB | None worth pulling — it buys BF16 compute speed; disappears in pure FP32 | Pure FP32 roughly doubles activation memory and forfeits the speedup |
-| Activations | \~43 GB | Activation checkpointing; smaller batch size; shorter sequence length | Activation checkpointing adds roughly a third to training time; smaller batches can slow or destabilize convergence; shorter sequences limit what the model can learn |
+| BF16 weight cache | 2.0 GB | None worth pulling — it buys BF16 compute speed; disappears in pure FP32 | Pure FP32 nearly doubles activation memory (calculated 1.85×) and forfeits the speedup |
+| Activations | ~43 GB | Activation checkpointing; smaller batch size; shorter sequence length | Activation checkpointing adds roughly a third to training time; smaller batches can slow or destabilize convergence; shorter sequences limit what the model can learn |
 
-Two observations. First, optimizer states are twice the weights — the largest static cost, and the one most often left out of a budget; the static items together come to ~18 GB before a single token flows. Second, activations dominate everything else combined, and they are also where your cheapest lever lives.
+Two observations. First, optimizer states are twice the weights — the largest static cost, and the one most often left out of a budget; weights, gradients, and optimizer state come to ~16 GB before activations enter the picture, ~18 GB once the BF16 cache materializes during the forward pass. Second, activations dominate everything else combined, and they are also where your cheapest lever lives.
 
 ---
 
@@ -42,30 +42,30 @@ Two observations. First, optimizer states are twice the weights — the largest 
 
 ### Weights
 
-weight memory \= parameter count × bytes per parameter
+weight memory = parameter count × bytes per parameter
 
 Bytes per parameter is set by *storage* precision: 4 bytes for FP32, 2 bytes for BF16 or FP16, 1 byte for INT8. And in a standard mixed-precision recipe, storage precision is FP32: the framework casts weights to BF16 on the fly for each matrix multiply, but the stored weights — the ones this line item counts — never change. True BF16 storage exists but is rare in training, because applying small optimizer updates to low-precision weights loses them.
 
-Worked configuration: 1.01e9 × 4 bytes \= **4.0 GB** (calculated; measured 4.05 GB).
+Worked configuration: 1.01e9 × 4 bytes = **4.0 GB** (calculated; measured 4.05 GB).
 
 ### Gradients
 
-gradient memory \= parameter count × bytes per parameter
+gradient memory = parameter count × bytes per parameter
 
 Same shape as weights, because there is exactly one gradient per weight, and gradients match the storage precision of their weights: FP32.
 
-Worked configuration: 1.01e9 × 4 bytes \= **4.0 GB** (calculated; measured 4.05 GB).
+Worked configuration: 1.01e9 × 4 bytes = **4.0 GB** (calculated; measured 4.05 GB).
 
 ### Optimizer states
 
-optimizer memory \= parameter count × bytes per parameter of optimizer state
+optimizer memory = parameter count × bytes per parameter of optimizer state
 
 For Adam, two values are held per parameter, both in FP32:
 
 - Momentum (first moment): 4 bytes  
 - Variance (second moment): 4 bytes
 
-That is 8 bytes per parameter. Worked configuration: 1.01e9 × 8 bytes \= **8.1 GB** (calculated; measured 8.09 GB).
+That is 8 bytes per parameter. Worked configuration: 1.01e9 × 8 bytes = **8.1 GB** (calculated; measured 8.09 GB).
 
 You may have seen 12 bytes per parameter quoted for Adam. That figure includes a full-precision "master copy" of the weights, which only exists in recipes that store weights in BF16 — the optimizer keeps an FP32 copy so small updates aren't lost, applies updates there, and casts back down. When weights are stored in FP32, as here, the weights are their own master copy and the third term disappears.
 
@@ -89,11 +89,11 @@ Where:
 - **batch size** is examples processed simultaneously (256 here)  
 - **sequence length** is tokens per example (100 here)  
 - **hidden dimension** is the model's internal width (2,048 here)  
-- **bytes per element per layer** is the term that surprises people: roughly **40 to 45 bytes** without activation checkpointing
+- **bytes per element per layer** is the term that surprises people: roughly **40 bytes** without activation checkpointing (the per-tensor accounting gives exactly 40; the measured value implies ~41, the difference being small once-per-model terms)
 
-Worked configuration: 20 × 256 × 100 × 2,048 × 41 bytes ≈ **43 GB** (measured: 42.9 GB on an H100 80GB; see the note on measurement below).
+Worked configuration: 20 × 256 × 100 × 2,048 × 40 bytes ≈ **42 GB** (calculated: 42.2 GB; measured: 42.9 GB on an H100 80GB; see the note on measurement below).
 
-That last constant is where most back-of-the-envelope estimates go wrong. The intuitive guess is 2 bytes per element per layer — one BF16 tensor of shape (batch × sequence × hidden dimension) saved per layer. The real number is roughly twenty times that, because a transformer block does not save one intermediate tensor. It saves fifteen to twenty of them: the layer-norm inputs, the query/key/value projections, the attention output, the feed-forward inputs, and the feed-forward hidden layer, which is typically four times the hidden dimension on its own. All of them are needed again in the backward pass.
+That last constant is where most back-of-the-envelope estimates go wrong. The intuitive guess is 2 bytes per element per layer — one BF16 tensor of shape (batch × sequence × hidden dimension) saved per layer. The real number is roughly twenty times that, because a transformer block does not save one intermediate tensor. It saves fourteen of them: seven attention-side tensors (the pre-norm input, the projection input, query, key, value, the attention output, and the output-projection input), two feed-forward inputs, the feed-forward hidden layer twice — at four times the hidden dimension each — and three dropout masks. All of them are needed again in the backward pass.
 
 If you take one number from this article, take that one. Estimating activations at 2 bytes per element per layer will tell you a job fits when it needs twenty times the memory you budgeted.
 
@@ -107,7 +107,7 @@ For anyone coming from tabular machine learning, this is the trap. A batch of 25
 
 Both scale activation memory linearly. Halving either one halves this line item.
 
-Going from a batch size of 256 examples to 128 examples takes activations from roughly 43 GB to roughly 21.5 GB (calculated). The other three line items — weights, gradients, optimizer states — do not move at all. They stay at 16.1 GB combined.
+Going from a batch size of 256 examples to 128 examples takes activations from roughly 43 GB to roughly 21.5 GB (calculated). The other three line items — weights, gradients, optimizer states — do not move at all. They stay at 16.1 GB combined (calculated; measured 16.3 GB).
 
 Sequence length behaves the same way in the formula above, with one caveat. If your implementation stores the full attention probability matrix, memory grows with the square of sequence length rather than linearly, and long sequences get expensive fast. Memory-efficient attention implementations avoid storing that matrix. If long sequences are a requirement rather than a preference, confirming you have memory-efficient attention is the first thing to check.
 
@@ -121,7 +121,7 @@ So instead of holding every layer's full working set at once, you hold:
 
 (layers × batch size × sequence length × hidden dimension × 4 bytes)   ← the saved layer inputs
 
-\+ one layer's full working set, plus the gradient flowing through it   ← the recomputation peak
++ one layer's full working set, plus the gradient flowing through it   ← the recomputation peak
 
 One trap for estimators: the saved layer inputs are **4 bytes per element even under BF16 mixed precision.** Layer norms and residual additions run in full precision, and the tensor passed *between* layers — which is exactly what checkpointing saves — comes out of those FP32 ops. Budget 4 bytes, not 2, or your dominant term is off by half.
 
@@ -129,7 +129,7 @@ Worked configuration: 4.2 GB of saved layer inputs plus roughly 2.7 GB for the l
 
 That is roughly 43 GB down to 7 GB — a sixfold reduction on the largest line item in the budget. And at this configuration it shrinks activations so far that they stop setting the peak at all: the run's measured high-water mark, **20.3 GB**, comes from the *optimizer step* — weights, gradients, optimizer state, plus Adam's own update scratch, about 20 bytes per parameter — not from the activations. Once checkpointing is on, that 20-bytes-per-parameter floor is the number a bigger batch has to beat before it costs you anything.
 
-The cost is training time. You are running part of the forward pass twice. In the benchmark run behind this article, per-step time went from 417 ms to 547 ms, a **31% increase** (measured). That is a real cost, but it is predictable, and it is almost always a better trade than not being able to train at all.
+The cost is training time. You are running part of the forward pass twice. In the benchmark run behind this article, per-step time went from 415 ms to 544 ms, a **31% increase** (measured). That is a real cost, but it is predictable, and it is almost always a better trade than not being able to train at all.
 
 ---
 
@@ -143,10 +143,12 @@ Same worked configuration: 1.01 billion parameters, 20 layers, hidden dimension 
 | Gradients | 4.0 GB | 4.0 GB |
 | Optimizer states | 8.1 GB | 8.1 GB |
 | BF16 weight cache | 2.0 GB | 2.0 GB (released before the peak) |
-| Activations | \~43 GB | \~7 GB (at their own peak) |
+| Activations | ~43 GB | ~7 GB (at their own peak) |
 | **Peak allocated (measured)** | **59.2 GB** | **20.3 GB** |
-| Allocator overhead and CUDA context | \~1.0 GB | \~6.1 GB |
-| **Total to size against (measured)** | **60.2 GB** | **26.5 GB** |
+| Allocator overhead: cached blocks and fragmentation (measured) | ~1.0 GB | ~6.1 GB |
+| **Total to size against (measured reserved)** | **60.2 GB** | **26.5 GB** |
+
+Add roughly another 0.6 GB on top of the reserved figure for the CUDA context itself — driver and kernel-library state that lives outside the framework's memory counters entirely.
 
 The columns do not sum exactly to the peak, and that is not rounding: memory peaks at a *moment*, not as a ledger total. Without checkpointing, everything is resident at once near the end of the forward pass, so the sum is close. With checkpointing, the peak lands on the optimizer step — after the BF16 cache has been released and when almost no activations are alive — so the peak is the 20-bytes-per-parameter optimizer floor, not the column sum.
 
@@ -156,9 +158,9 @@ The practical read: without activation checkpointing, this job needs an 80 GB ca
 
 ## Checked against hardware
 
-Every formula in this article was validated against a 24-configuration training sweep of the worked model on an H100 80GB, varying batch size, sequence length, optimizer, precision, and checkpointing one lever at a time. For every configuration that completed, predicted memory landed within ~2% of measured; every configuration that ran out of memory was predicted to run out of memory, and none that fit were predicted to OOM.
+Every formula in this article was validated against a 24-configuration training sweep of the worked model on an H100 80GB — varying batch size, sequence length, optimizer, precision, and checkpointing one lever at a time for the core sweeps, plus deliberate combinations (checkpointing crossed with batch and sequence, and an all-levers-at-once set). For every configuration that completed, predicted memory landed within ~2% of measured; every configuration that ran out of memory was predicted to run out of memory, and none that fit were predicted to OOM.
 
-The measured fit boundaries for the worked 1B-parameter model on the 80 GB card:
+The measured fit boundaries for the worked 1B-parameter model on the 80 GB card (figures are peak allocated; reserved runs 1–6 GB higher, as above):
 
 | | No levers | With checkpointing |
 | :---- | :---- | :---- |
@@ -167,8 +169,8 @@ The measured fit boundaries for the worked 1B-parameter model on the 80 GB card:
 
 That table is the whole argument of this article in four cells: the same model, on the same card, either trains or cannot train depending on choices that cost nothing but a config flag — and each lever buys roughly one 4× step in batch or sequence before the wall moves back in.
 
-![Memory vs. sequence length: at seq 100 the job fits in 59 GB; at 512, 1,024, and 2,048 predicted demand climbs to ~880 GB against an 80 GB card](article1-memory-vs-seqlen.png)  
-Sequence length is the fastest way to hit the wall: the activation line grows linearly, and by seq 2,048 this model wants ~880 GB — eleven cards' worth — for what looks like a modest config change. The hatched bars are configurations that ran out of memory; the black diamond is the one that fit.
+![Memory vs. sequence length for the worked 1B-parameter model at batch 256, BF16 mixed precision: seq 100 fits in 59 GB measured; seq 512, 1,024, and 2,048 have predicted demand of 236, 452, and 884 GB against an 80 GB card](memory-vs-seqlen.png)  
+Sequence length is the fastest way to hit the wall (worked model, batch 256, BF16 mixed precision): the activation line grows linearly through predicted demands of 236, 452, and 884 GB at seq 512, 1,024, and 2,048 — the last of them eleven cards' worth — for what looks like a modest config change. The hatched bars are configurations that ran out of memory; the black diamond is the one that fit.
 
 That is the pattern worth internalizing. The static line items are set by decisions you have probably already made — model size, optimizer, precision. The dynamic line item is set by decisions you can still change, and it is usually the one that determines what hardware you need.
 

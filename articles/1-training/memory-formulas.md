@@ -1,7 +1,8 @@
-# Corrected training-memory formulas — reference for article-1-draft.md and the companion spreadsheet
+# Corrected training-memory formulas — reference for article-1-training.md and the companion spreadsheet
 
-Source: the `benchmark/` GPU sweep in this repo, cross-checked against a real A100 80GB
-run. Full derivation, code, and tests are in `benchmark/predictions.py`. This document
+Source: the `benchmark/` GPU sweep in this repo, cross-checked against real 80GB-GPU
+runs (original 17-config sweep: A100 80GB; current 24-config reference sweep in
+`runs/20260731-1200/`: H100 80GB). Full derivation, code, and tests are in `benchmark/predictions.py`. This document
 exists to (a) tell you exactly what to change in the article and why, and (b) give you
 formulas in plain arithmetic — not Python — so they translate directly into spreadsheet
 cells.
@@ -219,7 +220,7 @@ capacity — that's what the OOM call in `validate_results.py` does.
 |---|---|---|
 | Weights, gradients (fp32-always) | **High** | Directly measured on CPU tensors, exact by construction |
 | Optimizer state (8 or 2 bytes/param) | **High** | Validated against a real measured delta (0.5% error) |
-| Autocast weight cache | **Medium-high** | Logically sound, not yet isolated as its own independent GPU measurement |
+| Autocast weight cache | **High** | Isolated 2026-07-31 via an `autocast(cache_enabled=False)` toggle on the H100 (`runs/20260731-1200/debug_ckpt_out.json`): peak forward memory drops 1.98 GB with the cache off, vs. 2.02 GB predicted |
 | Activation formula, non-checkpointed | **High at small-to-moderate scale** | Baseline config validated to 2.1% against real GPU data |
 | Attention-probability-matrix = 0 | **High** | Confirmed via source (this code's attention call forces the flash/SDPA path) *and* empirically ruled out the alternative using this sweep's own OOM data (a materialized matrix would demand ~550 GB, not the observed ~68 GB) |
 | Dropout mask term | **Speculative** | Assumes masks are materialized as byte tensors; some fused CUDA dropout kernels instead save only RNG state, which would make this term ~0. Not yet isolated. It's a small fraction of the total either way. |
@@ -258,11 +259,16 @@ Output cells, in order (each is a one-line spreadsheet formula from §2/§4 abov
 5. `per_layer_bytes` = 9×B×S×d×b + 2×B×S×f×d×b + 2×B×S×d + B×S×f×d   *(b = IF(precision="bf16",2,4))*
 6. `once_per_model_bytes` = B×S×d×b + B×S×V×b + IF(precision="bf16", B×S×V×4, 0)
 7. `activations_gb` = IF(checkpointing,
-   `L×B×S×d×b + per_layer_bytes + once_per_model_bytes`,
+   `(L+3)×B×S×d×4 + 7×B×S×d×b + 3×B×S×f×d×b + B×S×d + B×S×V×b`,
    `L×per_layer_bytes + once_per_model_bytes`) / 1e9
-8. `allocated_total_gb` = weights_gb + gradients_gb + optimizer_gb + autocast_cache_gb + activations_gb
+8. `allocated_total_gb` = IF(checkpointing,
+   `MAX(weights_gb + optimizer_gb + activations_gb,`
+   `    weights_gb + gradients_gb + optimizer_gb + IF(optimizer="adam", gradients_gb, 0),`
+   `    weights_gb + optimizer_gb + autocast_cache_gb + L×B×S×d×4/1e9 + (2×B×S×f×d + 3×B×S×d)×b/1e9 + (B×S×V×b + IF(precision="bf16", B×S×V×4, 0))/1e9)`,
+   `weights_gb + gradients_gb + optimizer_gb + autocast_cache_gb + activations_gb`)
+   *(checkpointed: max of backward-recompute, optimizer-step, and forward phase peaks — see §2)*
 9. `reserved_total_gb` = allocated_total_gb + 0.6 + IF(checkpointing, 5.2, 1.2)
-10. `fits_gpu` = reserved_total_gb ≤ (your GPU's usable capacity — 79.25 for an 80GB A100)
+10. `fits_gpu` = reserved_total_gb ≤ (your GPU's usable capacity — 79.18 GiB × 1.0737 ≈ 85.0 for an 80GB H100/A100)
 
 That's a complete, self-contained spreadsheet — no external lookups, no fudge
 multiplier, every cell traceable to a named row in §2-4.

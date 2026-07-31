@@ -174,10 +174,12 @@ CUDA_CONTEXT_OVERHEAD_GB = 0.6
 FRAGMENTATION_GB = 1.2
 CHECKPOINTING_FRAGMENTATION_GB = 5.2
 
-# nvidia-smi/torch reported ~79.25 GiB usable on this fleet's A100 80GB (read directly
-# off this sweep's own OOM error messages), converted to the decimal-GB (1e9-byte) units
-# used everywhere else in this file.
-GPU_CAPACITY_GB = 79.25 * (1024 ** 3) / GB
+# torch reported 79.18 GiB usable on the H100 80GB that ran the 2026-07-31 sweep (read
+# directly off that sweep's own OOM error messages: "GPU 0 has a total capacity of
+# 79.18 GiB"), converted to the decimal-GB (1e9-byte) units used everywhere else in
+# this file. (The original 17-config validation sweep ran on an A100 80GB, which
+# reports essentially the same usable capacity.)
+GPU_CAPACITY_GB = 79.18 * (1024 ** 3) / GB
 
 
 def predict_line_items(n_params, precision, optimizer, batch, seq_len, d_model, n_layers, ff_mult, vocab, checkpointing):

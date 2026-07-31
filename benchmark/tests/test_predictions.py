@@ -138,9 +138,9 @@ class TestLineItemsAndOomPrediction(unittest.TestCase):
         )
         self.assertTrue(predicted["predicted_oom"])
 
-    def test_gpu_capacity_constant_matches_the_a100_80gb_fleet(self):
-        # 79.25 GiB usable, as read off this sweep's own OOM error messages.
-        self.assertAlmostEqual(GPU_CAPACITY_GB, 79.25 * (1024 ** 3) / GB, places=2)
+    def test_gpu_capacity_constant_matches_the_h100_80gb_fleet(self):
+        # 79.18 GiB usable, as read off the 2026-07-31 sweep's own OOM error messages.
+        self.assertAlmostEqual(GPU_CAPACITY_GB, 79.18 * (1024 ** 3) / GB, places=2)
 
 
 class TestStaticVsMeasured(unittest.TestCase):

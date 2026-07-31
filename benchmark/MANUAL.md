@@ -2,8 +2,10 @@
 
 What this is: a benchmark that measures **peak GPU memory during training** for a
 ~1B-parameter transformer, across a set of one-lever-at-a-time config changes, on a
-single A100 80GB. It validates the formulas in `../article-1-draft.md` ("Training:
-The Four Line Items of GPU Memory") by comparing predicted vs. measured memory.
+single 80GB GPU (the original validation sweep ran on an A100 80GB; the current
+2026-07-31 reference sweep in `runs/` ran on an H100 80GB). It validates the formulas in
+`../articles/1-training/article-1-training.md` ("Training: The Four Line Items of GPU
+Memory") by comparing predicted vs. measured memory.
 
 It does **not** measure model quality, throughput as a performance claim, or anything
 about fine-tuning/inference — those are separate, later work. Training data is random

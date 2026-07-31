@@ -1,0 +1,320 @@
+[
+ {
+  "batch": 256,
+  "seq": 100,
+  "ckpt": true,
+  "cache_enabled": true,
+  "alloc_steady_gb": 16.30072064,
+  "fwd_peak_gb": 19.898229248,
+  "alloc_after_fwd_gb": 16.712430592,
+  "bwd_peak_gb": 19.268306944,
+  "alloc_after_bwd_gb": 16.30072064,
+  "peak_composition": {
+   "replay_peak_gb": 8.141299524,
+   "buckets": [
+    {
+     "size_mb": 67.108864,
+     "count": 80,
+     "total_gb": 5.36870912,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_strided_generic(c10::ArrayRef<long>, c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType)"
+     ]
+    },
+    {
+     "size_mb": 50.331648,
+     "count": 40,
+     "total_gb": 2.01326592,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_strided_generic(c10::ArrayRef<long>, c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType)"
+     ]
+    },
+    {
+     "size_mb": 16.777216,
+     "count": 40,
+     "total_gb": 0.67108864,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_strided_generic(c10::ArrayRef<long>, c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType)"
+     ]
+    },
+    {
+     "size_mb": 51.2,
+     "count": 1,
+     "total_gb": 0.0512,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_generic(c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType, std::optional<c10::MemoryFormat>)"
+     ]
+    }
+   ],
+   "small_blocks_gb": 0.037035844
+  }
+ },
+ {
+  "batch": 1024,
+  "seq": 100,
+  "ckpt": true,
+  "cache_enabled": true,
+  "alloc_steady_gb": 16.45686016,
+  "fwd_peak_gb": 37.041299968,
+  "alloc_after_fwd_gb": 30.226134016,
+  "bwd_peak_gb": 40.035108864,
+  "alloc_after_bwd_gb": 16.45686016,
+  "peak_composition": {
+   "replay_peak_gb": 27.82809696,
+   "buckets": [
+    {
+     "size_mb": 838.8608,
+     "count": 23,
+     "total_gb": 19.2937984,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_generic(c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType, std::optional<c10::MemoryFormat>)"
+     ]
+    },
+    {
+     "size_mb": 1677.7216,
+     "count": 3,
+     "total_gb": 5.0331648,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_generic(c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType, std::optional<c10::MemoryFormat>)"
+     ]
+    },
+    {
+     "size_mb": 419.4304,
+     "count": 4,
+     "total_gb": 1.6777216,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_generic(c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType, std::optional<c10::MemoryFormat>)"
+     ]
+    },
+    {
+     "size_mb": 1258.2912,
+     "count": 1,
+     "total_gb": 1.2582912,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_generic(c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType, std::optional<c10::MemoryFormat>)"
+     ]
+    },
+    {
+     "size_mb": 209.7152,
+     "count": 1,
+     "total_gb": 0.2097152,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_strided_generic(c10::ArrayRef<long>, c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType)"
+     ]
+    },
+    {
+     "size_mb": 204.8,
+     "count": 1,
+     "total_gb": 0.2048,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_generic(c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType, std::optional<c10::MemoryFormat>)"
+     ]
+    },
+    {
+     "size_mb": 33.554432,
+     "count": 3,
+     "total_gb": 0.100663296,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_strided_generic(c10::ArrayRef<long>, c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType)"
+     ]
+    }
+   ],
+   "small_blocks_gb": 0.049942464
+  }
+ },
+ {
+  "batch": 256,
+  "seq": 512,
+  "ckpt": true,
+  "cache_enabled": true,
+  "alloc_steady_gb": 16.517022208,
+  "fwd_peak_gb": 43.44315136,
+  "alloc_after_fwd_gb": 35.274011648,
+  "bwd_peak_gb": 47.789918208,
+  "alloc_after_bwd_gb": 16.517022208,
+  "peak_composition": {
+   "replay_peak_gb": 35.580088256,
+   "buckets": [
+    {
+     "size_mb": 1073.741824,
+     "count": 23,
+     "total_gb": 24.696061952,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_generic(c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType, std::optional<c10::MemoryFormat>)"
+     ]
+    },
+    {
+     "size_mb": 2147.483648,
+     "count": 3,
+     "total_gb": 6.442450944,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_generic(c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType, std::optional<c10::MemoryFormat>)"
+     ]
+    },
+    {
+     "size_mb": 536.870912,
+     "count": 4,
+     "total_gb": 2.147483648,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_generic(c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType, std::optional<c10::MemoryFormat>)"
+     ]
+    },
+    {
+     "size_mb": 1610.612736,
+     "count": 1,
+     "total_gb": 1.610612736,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_generic(c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType, std::optional<c10::MemoryFormat>)"
+     ]
+    },
+    {
+     "size_mb": 268.435456,
+     "count": 1,
+     "total_gb": 0.268435456,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_strided_generic(c10::ArrayRef<long>, c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType)"
+     ]
+    },
+    {
+     "size_mb": 262.144,
+     "count": 1,
+     "total_gb": 0.262144,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_generic(c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType, std::optional<c10::MemoryFormat>)"
+     ]
+    },
+    {
+     "size_mb": 33.554432,
+     "count": 3,
+     "total_gb": 0.100663296,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_strided_generic(c10::ArrayRef<long>, c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType)"
+     ]
+    }
+   ],
+   "small_blocks_gb": 0.052236224
+  }
+ },
+ {
+  "batch": 256,
+  "seq": 100,
+  "ckpt": true,
+  "cache_enabled": false,
+  "alloc_steady_gb": 16.30072064,
+  "fwd_peak_gb": 17.917981184,
+  "alloc_after_fwd_gb": 16.7126272,
+  "bwd_peak_gb": 19.268306944,
+  "alloc_after_bwd_gb": 16.30072064
+ },
+ {
+  "batch": 256,
+  "seq": 100,
+  "ckpt": false,
+  "cache_enabled": true,
+  "alloc_steady_gb": 16.301982208,
+  "fwd_peak_gb": 58.72992512,
+  "alloc_after_fwd_gb": 58.621871104,
+  "bwd_peak_gb": 59.220960768,
+  "alloc_after_bwd_gb": 16.301982208
+ },
+ {
+  "batch": 256,
+  "seq": 100,
+  "ckpt": false,
+  "cache_enabled": false,
+  "alloc_steady_gb": 16.301982208,
+  "fwd_peak_gb": 58.72918784,
+  "alloc_after_fwd_gb": 58.621871104,
+  "bwd_peak_gb": 59.220960768,
+  "alloc_after_bwd_gb": 16.30285056
+ }
+]
