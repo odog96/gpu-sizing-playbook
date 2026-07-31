@@ -5,14 +5,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this repo is
 
 A GPU-memory benchmark (`benchmark/`) that validates the memory-accounting formulas used
-in a two-part article series (`article-0-draft.md`, `article-1-draft.md` at repo root).
-`article-1-draft.md` ("Training: The Four Line Items of GPU Memory") makes specific
-numeric claims about how much VRAM a ~1B-parameter transformer's training run needs; the
-benchmark exists to measure a real training loop's peak CUDA memory across a sweep of
-configs and check the article's formulas against it. `memory-formulas-for-article.md` is
-the working reference doc translating the corrected formulas back into article/spreadsheet
-language — treat it as the source of truth for what the article's numbers *should* say,
-since the formulas have already gone through one full correction pass (see "History" below).
+in an article series on sizing GPU infrastructure, organized one folder per article under
+`articles/` (`articles/0-model-selection/`, `articles/1-training/`; future articles —
+fine-tuning, inference, multi-GPU training — get their own numbered folders, each holding
+its markdown plus its figures). `articles/1-training/article-1-training.md` ("Training:
+The Four Line Items of GPU Memory") makes specific numeric claims about how much VRAM a
+~1B-parameter transformer's training run needs; the benchmark exists to measure a real
+training loop's peak CUDA memory across a sweep of configs and check the article's
+formulas against it. `articles/1-training/memory-formulas.md` is the working reference
+doc translating the corrected formulas back into article/spreadsheet language — treat it
+as the source of truth for what the article's numbers *should* say, since the formulas
+have already gone through two full correction passes (see "History" below).
 
 There is no CPU training path anywhere in this codebase — training requires CUDA. Formula
 code, sweep enumeration, and chart generation are CPU-only and unit-testable without a GPU.
@@ -132,5 +135,5 @@ showed the saved layer boundaries are fp32 (not compute-dtype — LayerNorm and 
 adds run fp32 under autocast) and that the checkpointed peak is the max of three phase
 peaks (backward-recompute, foreach-Adam optimizer-step at 20 bytes/param, forward), not
 a sum. All 24 rows now validate (worst non-OOM error 2.2%; every OOM call correct).
-`memory-formulas-for-article.md` has the full term-by-term old-vs-new comparison if you
-need the history in detail.
+`articles/1-training/memory-formulas.md` has the full term-by-term old-vs-new comparison
+if you need the history in detail.
