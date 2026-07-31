@@ -124,5 +124,13 @@ non-checkpointed activation formula was accidentally using the *checkpointed* fo
 math (and the checkpointed formula was additionally dividing by layer count on top of
 that). Current formulas were validated against a real 17-config GPU sweep: 16/17 rows
 landed within ±10% of measured `max_allocated_gb`, with the one miss (checkpointing,
-~11.6% over) reported honestly rather than tuned away. `memory-formulas-for-article.md`
-has the full term-by-term old-vs-new comparison if you need the history in detail.
+~11.6% over) reported honestly rather than tuned away.
+
+A second correction pass (2026-07-31, on a 24-config H100 sweep) then fixed the
+checkpointed formula itself: a CUDA allocator-history replay (`benchmark/debug_ckpt.py`)
+showed the saved layer boundaries are fp32 (not compute-dtype — LayerNorm and residual
+adds run fp32 under autocast) and that the checkpointed peak is the max of three phase
+peaks (backward-recompute, foreach-Adam optimizer-step at 20 bytes/param, forward), not
+a sum. All 24 rows now validate (worst non-OOM error 2.2%; every OOM call correct).
+`memory-formulas-for-article.md` has the full term-by-term old-vs-new comparison if you
+need the history in detail.
