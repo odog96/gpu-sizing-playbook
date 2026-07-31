@@ -221,11 +221,13 @@ acceptance bar: ≤10% error on `max_allocated_gb` for every non-OOM row, and a 
 OOM call on every row.
 
 **If a row fails:** that's real signal, not a script bug — it means the formula in
-`predictions.py` is off for that config. The checkpointing row is the one known
-borderline case from the last real sweep (~11.6% over, see the report from that review
-for why); everything else validated within a few percent. Don't retune the fragmentation
-constants to force a pass — they're deliberately kept as their own named, documented
-terms (see `predictions.py`) rather than fit to make numbers match.
+`predictions.py` is off for that config. As of the 2026-07-31 H100 sweep every row
+validates (worst non-OOM error 2.2%, every OOM call correct), including the checkpointed
+rows the earlier formula missed by 10–14%. If a checkpointed row starts drifting again,
+suspect the fragmentation constant first (its measured reserved-minus-allocated gap
+spans 3.58–6.12 GB) — but don't retune it to force a pass; it and the CUDA-context term
+are deliberately kept as named, documented empirical terms (see `predictions.py`) rather
+than fit to make numbers match.
 
 **Where output lands:**
 - `benchmark/results.csv` — the full sweep data

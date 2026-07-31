@@ -207,8 +207,10 @@ training process:
 > Reserved total = Allocated total + CUDA context overhead (~0.6 GB) + fragmentation allowance (~1.2 GB, ~5.2 GB if checkpointing)
 
 The fragmentation figures come from the gap between `reserved` and `allocated` in the
-one real sweep available (checkpointing fragments the allocator's pool more than
-steady-state training — a single data point, treat as provisional). If your spreadsheet
+2026-07-31 sweep: ~1.2 GB for non-checkpointed rows, and 3.58–6.12 GB across the three
+non-OOM checkpointed configs (checkpointing fragments the allocator's pool more than
+steady-state training, but the gap doesn't scale cleanly with batch/seq — it's largest
+at the smallest config). The 5.2 GB constant sits inside that range. If your spreadsheet
 needs a "will this fit" checkbox, compare **reserved**, not allocated, against GPU
 capacity — that's what the OOM call in `validate_results.py` does.
 
@@ -226,15 +228,16 @@ capacity — that's what the OOM call in `validate_results.py` does.
 | Dropout mask term | **Speculative** | Assumes masks are materialized as byte tensors; some fused CUDA dropout kernels instead save only RNG state, which would make this term ~0. Not yet isolated. It's a small fraction of the total either way. |
 | Activation formula, checkpointed | **High** | Rebuilt 2026-07-31 from a CUDA allocator-history replay (every live block at peak identified by exact byte size); validates within 0.6% on all four non-OOM checkpointed H100 rows and fixes the one wrong OOM call |
 | batch/seq combinations beyond what's been measured (incl. all batch=1,024/4,096 numbers in §3) | **Extrapolated, unverified** | Formula only, no GPU measurement at these exact points yet |
-| CUDA context + fragmentation constants | **Order-of-magnitude, not derived** | Structurally invisible to `torch`'s memory API; fragmentation figure is a single data point |
+| CUDA context + fragmentation constants | **Order-of-magnitude, not derived** | Structurally invisible to `torch`'s memory API; the checkpointing fragmentation constant now spans three measured gaps (3.58–6.12 GB) that don't scale cleanly, so it stays a single documented empirical term |
 
-**On the checkpointing 11.6% miss:** the "one layer's full working set transiently
-resident during recompute" term could be tuned down to pass a tighter error bar, but
-that would be curve-fitting a single data point rather than fixing a named,
-understood mechanism — reporting it honestly instead. A wider sweep across
-checkpointing×batch and checkpointing×seq (now in `sweep_config.py` as the
-`checkpointing_batch`/`checkpointing_seq` levers) will either confirm this term or show
-where it needs revision.
+**On the one remaining provisional term:** the earlier ~11.6% checkpointing miss is gone
+— the checkpointed *activation* formula was rebuilt from allocator-history evidence and
+now validates within 0.6% (see the confidence table above). What stays provisional is
+the checkpointing *fragmentation* constant: the reserved-minus-allocated gap spans
+3.58–6.12 GB across the three measured checkpointed configs and doesn't scale cleanly
+with batch or sequence, so it's kept as a single documented empirical term rather than
+curve-fit to any one point. A wider checkpointing sweep would either pin it down or show
+it needs a batch/seq-dependent form.
 
 ---
 
