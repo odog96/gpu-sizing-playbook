@@ -5,17 +5,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this repo is
 
 A GPU-memory benchmark (`benchmark/`) that validates the memory-accounting formulas used
-in an article series on sizing GPU infrastructure, organized one folder per article under
-`articles/` (`articles/0-model-selection/`, `articles/1-training/`; future articles —
-fine-tuning, inference, multi-GPU training — get their own numbered folders, each holding
-its markdown plus its figures). `articles/1-training/article-1-training.md` ("Training:
-The Four Line Items of GPU Memory") makes specific numeric claims about how much VRAM a
-~1B-parameter transformer's training run needs; the benchmark exists to measure a real
-training loop's peak CUDA memory across a sweep of configs and check the article's
-formulas against it. `articles/1-training/memory-formulas.md` is the working reference
-doc translating the corrected formulas back into article/spreadsheet language — treat it
-as the source of truth for what the article's numbers *should* say, since the formulas
-have already gone through two full correction passes (see "History" below).
+in an article series on sizing GPU infrastructure. Article 0's prose lives in the
+repo-root `README.md` (only its figure sits under `articles/0-model-selection/`); Article
+1 onward follows a one-folder-per-article layout under `articles/` (`articles/1-training/`
+today; future articles — fine-tuning, inference, multi-GPU training — get their own
+numbered folders, each holding markdown plus figures). `articles/1-training/article-1-training.md`
+("Training: The Four Line Items of GPU Memory") makes specific numeric claims about how
+much VRAM a ~1B-parameter transformer's training run needs; the benchmark exists to
+measure a real training loop's peak CUDA memory across a sweep of configs and check the
+article's formulas against it. `articles/1-training/memory-formulas.md` is the working
+reference doc translating the corrected formulas back into article/spreadsheet language,
+and `gpu-training-memory-sizing.xlsx` at the repo root is the companion spreadsheet form
+of the same numbers — treat both as source of truth for what the article *should* say,
+since the formulas have already gone through two full correction passes (see "History"
+below).
 
 There is no CPU training path anywhere in this codebase — training requires CUDA. Formula
 code, sweep enumeration, and chart generation are CPU-only and unit-testable without a GPU.
@@ -38,6 +41,14 @@ python benchmark.py --smoke-test                              # <1 min sanity ch
 python benchmark.py --output results.csv                      # full sweep (~15-25 min)
 python plot_results.py --input results.csv --outdir charts/
 python validate_results.py --input results.csv                # predicted-vs-measured error + OOM check
+python debug_ckpt.py > debug_out.json                         # CUDA-allocator-history diagnostic (how the 2026-07-31 checkpointed-formula correction was derived)
+```
+
+End-to-end remote runner (from repo root; spins up a fresh GPU box over SSH, runs smoke +
+full sweep + charts + validate, `scp`s everything back into `runs/<label>/`):
+
+```bash
+./run_sweep_remote.sh <user@host> <run-label>
 ```
 
 Dependencies: `pip install -r requirements.txt` (torch, pandas, matplotlib). 8-bit Adam
@@ -115,6 +126,18 @@ fused `scaled_dot_product_attention` (flash/memory-efficient kernel), meaning th
 seq×seq attention probability matrix is never materialized. `predictions.py`'s activation
 formula deliberately zeroes that term for this reason; don't add it back in without
 confirming the model no longer takes the SDPA path.
+
+**Reference material and helpers**:
+- `benchmark/MANUAL.md` — deeper reference than `RUNBOOK.md`: full 24-config sweep table,
+  complete `results.csv` column listing, all `benchmark.py` CLI flags. Reach for this
+  when RUNBOOK's overview isn't enough.
+- `runs/<timestamp>/` — local archive of prior sweep outputs. `runs/20260731-1200/` is
+  the H100 sweep the current formulas were validated against (worst non-OOM error 2.2%;
+  every OOM call correct). Useful as a known-good reference when a new sweep looks
+  suspicious.
+- `.claude/agents/article-reviewer` and `.claude/agents/quant-auditor` — named subagents
+  for reviewing article drafts and auditing numbers/formulas across the article ↔
+  spreadsheet ↔ benchmark surface. Prefer these over `general-purpose` for those tasks.
 
 ## History (why the code looks the way it does)
 

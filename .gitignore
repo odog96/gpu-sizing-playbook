@@ -6,3 +6,6 @@ __pycache__
 !.gitignore
 !.experiments
 creds.txt
+benchmark/results.csv
+benchmark/sweep_log.txt
+benchmark/charts/

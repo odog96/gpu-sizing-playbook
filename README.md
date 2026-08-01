@@ -11,7 +11,7 @@ We will be issuing an article for each area, along with a working sizing tool. B
 
 Most IT and AI teams are aware of the four model types: frontier model APIs, self-hosted open-weight models, fine-tuned open-weight models, and fully custom-trained models. What most teams lack is a clear picture of what each option demands in hardware. So they default to whichever one they already have experience with and build the justification afterward. Figure 1 lays out the four types and maps each to the activities you own — the activities this series sizes.
 
-![Figure 1: The decision chain](figure1.png)  
+![Figure 1: The decision chain](articles/0-model-selection/figure1.png)  
 Figure 1 shows the four model types, running left to right from most turnkey to most self-managed.
 
 Each model type maps to a set of activities. The exception is the frontier model API, which maps to none — it sits outside this series. The other three all require inference: any model you host, you serve. Fine-tuning applies to the fine-tuned open-weight model. Full training applies to the fully custom-trained model. These activities — training, fine-tuning, and inference — are the work this series sizes. Each gets its own article. Find your model type in Figure 1, follow its arrows, and those are the articles that apply to you.
@@ -20,9 +20,13 @@ Each model type maps to a set of activities. The exception is the frontier model
 
 The series runs the bottom row of Figure 1 in reverse. We start with training because it establishes the fundamentals — the memory line items — that fine-tuning and inference reuse. Build the full picture once, use it three times.
 
-1. **Training** — the four line items of GPU memory: weights, gradients, optimizer states, activations. The math for a 1-billion-parameter model, and a spreadsheet to size your own runs before your first out-of-memory error.  
-2. **Fine-tuning** — where the math gets friendlier.  
-3. **Inference** — where a different memory consumer, the KV cache, takes over.
+1. **[Training](articles/1-training/article-1-training.md)** — the four line items of GPU memory: weights, gradients, optimizer states, activations. The math for a 1-billion-parameter model, and a spreadsheet to size your own runs before your first out-of-memory error.  
+2. **Fine-tuning** — where the math gets friendlier. *(coming soon)*  
+3. **Inference** — where a different memory consumer, the KV cache, takes over. *(coming soon)*
 
 Each article will ship with a working sizing tool.
+
+---
+
+**Next:** [Training: The Four Line Items of GPU Memory →](articles/1-training/article-1-training.md)
 

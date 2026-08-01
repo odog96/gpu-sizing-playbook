@@ -129,7 +129,7 @@ Worked configuration: 4.2 GB of saved layer inputs plus roughly 2.7 GB for the l
 
 That is roughly 43 GB down to 7 GB — a sixfold reduction on the largest line item in the budget. And at this configuration it shrinks activations so far that they stop setting the peak at all: the run's measured high-water mark, **20.3 GB**, comes from the *optimizer step* — weights, gradients, optimizer state, plus Adam's own update scratch, about 20 bytes per parameter — not from the activations. Once checkpointing is on, that 20-bytes-per-parameter floor is the number a bigger batch has to beat before it costs you anything.
 
-The cost is training time. You are running part of the forward pass twice. In the benchmark run behind this article, per-step time went from 415 ms to 544 ms, a **31% increase** (measured). That is a real cost, but it is predictable, and it is almost always a better trade than not being able to train at all.
+The cost is training time. You are running part of the forward pass twice. In the benchmark run behind this article, per-step time went from 413 ms to 544 ms, a **31% increase** (measured). That is a real cost, but it is predictable, and it is almost always a better trade than not being able to train at all.
 
 ---
 

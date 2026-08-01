@@ -189,8 +189,8 @@ readers will act on directly.
 
 Real GPU data backs the qualitative shape of this even though these exact batch/seq
 combinations haven't been measured: at the sweep's baseline (batch=256, not 1,024),
-checkpointing alone cut measured memory from 59.1 GB to 20.3 GB (2.9x), and step time
-rose 1027ms → 1363ms (+33% — close to the article's own "~30% extra compute" claim,
+checkpointing alone cut measured memory from 59.2 GB to 20.3 GB (2.9x), and step time
+rose 413ms → 544ms (+31.7% — close to the article's own "~30% extra compute" claim,
 which holds up). The batch=1,024/4,096 numbers above are formula extrapolations from
 that same validated model, not independent GPU measurements — see the confidence table
 below before treating them as final.
@@ -299,8 +299,9 @@ multiplier, every cell traceable to a named row in §2-4.
   config, not 8 MB — a 20x difference).
   Also fix the batch example arithmetic itself, not just the multiplier.
 - **Checkpointing claim ("cuts this line ~10x for ~30% extra compute"):** keep — it
-  holds up under the corrected formula (9.5x cut in the activation line, +33% measured
-  step time). This is one of the few numbers in the article that didn't need fixing.
+  holds up under the corrected formula (6.1x cut in the activation line — 42.20 GB →
+  6.92 GB — and +31.7% measured step time at the sweep's baseline config). This is one
+  of the few numbers in the article that didn't need fixing.
 - **"What this means for hardware" section:** replace both worked numbers per the table
   in §3. The batch=4,096-with-both-levers claim is the most important fix — flag to
   readers that it changes from "comfortably fits" to "still doesn't fit an 80GB card."

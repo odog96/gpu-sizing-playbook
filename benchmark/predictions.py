@@ -166,15 +166,20 @@ def predict_activation_bytes(batch, seq_len, d_model, n_layers, ff_mult, vocab, 
 CUDA_CONTEXT_OVERHEAD_GB = 0.6
 
 # The gap between max_reserved_gb and max_allocated_gb across the 2026-07-31 sweep:
-# ~1.1-1.24 GB for every non-checkpointed row, but 3.58-6.12 GB across the three non-OOM
-# checkpointed configs (6.12 GB at batch=256/seq=100, 4.35 GB at batch=1024/seq=100,
-# 3.58 GB at batch=256/seq=512; all d=2048, 20 layers, amp_bf16, adam). Checkpointing's
-# repeated alloc/free of same-shaped recomputation buffers fragments the caching
-# allocator's pool more than steady-state training does, but the gap doesn't scale
-# cleanly with batch/seq -- it's largest at the smallest config -- so a single constant
-# is used. 5.2 sits inside the observed range: it under-predicts the baseline gap and
-# over-predicts the two larger-workload gaps. It stays a documented empirical term, not
-# tuned to a single point to force validation passes.
+# 0.95-1.11 GB for every non-checkpointed row (5 of 6 rows sit at 0.95 GB -- baseline
+# plus every batch/seq variant -- with only the adam8bit row lifting the range to
+# 1.11 GB), but 3.58-6.12 GB across the three non-OOM checkpointed configs (6.12 GB at
+# batch=256/seq=100, 4.35 GB at batch=1024/seq=100, 3.58 GB at batch=256/seq=512; all
+# d=2048, 20 layers, amp_bf16, adam). 1.2 sits just above the observed non-checkpointed
+# max as a deliberate conservative over-estimate -- safe for OOM prediction and honest
+# about the fact that the caching allocator reserves a bit more than any single tensor
+# accounting would predict.
+# Checkpointing's repeated alloc/free of same-shaped recomputation buffers fragments the
+# caching allocator's pool more than steady-state training does, but the gap doesn't
+# scale cleanly with batch/seq -- it's largest at the smallest config -- so a single
+# constant is used. 5.2 sits inside the observed checkpointed range: it under-predicts
+# the baseline gap and over-predicts the two larger-workload gaps. Both stay documented
+# empirical terms, not tuned to a single point to force validation passes.
 FRAGMENTATION_GB = 1.2
 CHECKPOINTING_FRAGMENTATION_GB = 5.2
 
