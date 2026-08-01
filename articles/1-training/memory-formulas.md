@@ -2,7 +2,7 @@
 
 Source: the `benchmark/` GPU sweep in this repo, cross-checked against real 80GB-GPU
 runs (original 17-config sweep: A100 80GB; current 24-config reference sweep in
-`runs/20260731-1200/`: H100 80GB). Full derivation, code, and tests are in `benchmark/predictions.py`. This document
+`benchmark/reference-run/`: H100 80GB). Full derivation, code, and tests are in `benchmark/predictions.py`. This document
 exists to (a) tell you exactly what to change in the article and why, and (b) give you
 formulas in plain arithmetic — not Python — so they translate directly into spreadsheet
 cells.
@@ -222,7 +222,7 @@ capacity — that's what the OOM call in `validate_results.py` does.
 |---|---|---|
 | Weights, gradients (fp32-always) | **High** | Directly measured on CPU tensors, exact by construction |
 | Optimizer state (8 or 2 bytes/param) | **High** | Validated against a real measured delta (0.5% error) |
-| Autocast weight cache | **High** | Isolated 2026-07-31 via an `autocast(cache_enabled=False)` toggle on the H100 (`runs/20260731-1200/debug_ckpt_out.json`): peak forward memory drops 1.98 GB with the cache off, vs. 2.02 GB predicted |
+| Autocast weight cache | **High** | Isolated 2026-07-31 via an `autocast(cache_enabled=False)` toggle on the H100 (`benchmark/reference-run/debug_ckpt_out.json`): peak forward memory drops 1.98 GB with the cache off, vs. 2.02 GB predicted |
 | Activation formula, non-checkpointed | **High at small-to-moderate scale** | Baseline config validated to 2.1% against real GPU data |
 | Attention-probability-matrix = 0 | **High** | Confirmed via source (this code's attention call forces the flash/SDPA path) *and* empirically ruled out the alternative using this sweep's own OOM data (a materialized matrix would demand ~550 GB, not the observed ~68 GB) |
 | Dropout mask term | **Speculative** | Assumes masks are materialized as byte tensors; some fused CUDA dropout kernels instead save only RNG state, which would make this term ~0. Not yet isolated. It's a small fraction of the total either way. |

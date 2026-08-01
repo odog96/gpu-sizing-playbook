@@ -131,10 +131,14 @@ confirming the model no longer takes the SDPA path.
 - `benchmark/MANUAL.md` — deeper reference than `RUNBOOK.md`: full 24-config sweep table,
   complete `results.csv` column listing, all `benchmark.py` CLI flags. Reach for this
   when RUNBOOK's overview isn't enough.
-- `runs/<timestamp>/` — local archive of prior sweep outputs. `runs/20260731-1200/` is
-  the H100 sweep the current formulas were validated against (worst non-OOM error 2.2%;
-  every OOM call correct). Useful as a known-good reference when a new sweep looks
-  suspicious.
+- `benchmark/reference-run/` — the tracked H100 sweep the current formulas were validated
+  against (worst non-OOM error 2.2%; every OOM call correct). Cited by
+  `articles/1-training/memory-formulas.md` and `benchmark/tests/test_predictions.py` as
+  the evidence behind Article 1's numbers. Contains `results.csv`, `sweep_log.txt`, and
+  `debug_ckpt_out.json` — the charts are regenerable via `plot_results.py`.
+- `runs/<timestamp>/` — untracked (gitignored) local scratch where `run_sweep_remote.sh`
+  drops each new sweep. Use as a known-good reference when a new sweep looks suspicious;
+  don't commit its contents.
 - `.claude/agents/article-reviewer` and `.claude/agents/quant-auditor` — named subagents
   for reviewing article drafts and auditing numbers/formulas across the article ↔
   spreadsheet ↔ benchmark surface. Prefer these over `general-purpose` for those tasks.

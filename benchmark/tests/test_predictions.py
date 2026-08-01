@@ -96,7 +96,7 @@ class TestLineItemsAndOomPrediction(unittest.TestCase):
         self.assertLess(pct_error, 0.10)
 
     def test_checkpointed_rows_match_h100_measured_within_2pct(self):
-        # Measured max_allocated_gb from the 2026-07-31 H100 sweep (runs/20260731-1200).
+        # Measured max_allocated_gb from the 2026-07-31 H100 sweep (benchmark/reference-run).
         # These three rows were the old formula's 10-14% misses; the phase-peak model
         # must land within 2% on all of them, with no tuned constants.
         rows = [
