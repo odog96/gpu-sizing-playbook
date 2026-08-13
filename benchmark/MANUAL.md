@@ -172,6 +172,122 @@ else in the file references colors directly.
 
 ## 3. Where things are headed if you extend this
 
-Everything is scoped to training only, on purpose — no fine-tuning/inference
-abstractions exist here yet (per the article series). If sizing that work later,
-expect new sibling scripts, not new flags bolted onto this one.
+Fine-tuning (Article 2) is the first extension of this benchmark and lives in a
+parallel set of sibling scripts — see § 4 below. Inference (Article 3, coming later)
+will follow the same pattern: new sibling files (`predictions_inference.py`,
+`benchmark_inference.py`, etc.), not new flags bolted onto `benchmark.py`.
+
+The rule Article 2 established, worth carrying forward: sibling scripts share the
+subprocess-per-config discipline, the JSON-line child contract, the direct-tensor
+measurement approach, and the CSV+charts+validate triple. Everything else (formulas,
+sweep, model construction) is domain-specific and gets its own file.
+
+---
+
+## 4. Fine-tuning sweep
+
+Article 2's benchmark: LoRA fine-tuning of TinyLlama-1.1B on A100 80 GB. Sibling
+scripts to §1's training set; nothing in §1 was modified to add this.
+
+```
+benchmark/
+├── predictions_finetune.py       fine-tune formulas: 5 line items + adapter placement
+├── sweep_config_finetune.py       fine-tune Config + 6 sweeps + build_all_configs_finetune
+├── model_finetune.py              build_finetune_model (TinyLlama + PEFT LoRA wrapper)
+├── memory_accounting_finetune.py  trainable/frozen split helpers
+├── train_finetune.py              GPU fine-tune training loop
+├── benchmark_finetune.py           parent/child orchestrator (the main fine-tune script)
+├── plot_finetune_results.py        5 fine-tune-specific charts
+├── validate_finetune_results.py    predicted-vs-measured + OOM cross-check
+├── debug_finetune.py               allocator-history diagnostic (3 targeted probes)
+├── fixtures/results_finetune_sample.csv   plausible fixture for testing plots without a GPU
+```
+
+### Fine-tune sweep (25 configs by default)
+
+Baseline: TinyLlama-1.1B, bf16 base storage, LoRA rank 8, all seven target modules
+(`q_proj|k_proj|v_proj|o_proj|gate_proj|up_proj|down_proj`), adapters on all layers,
+batch 8, seq 512, amp_bf16 compute, Adam, no checkpointing. Every sweep below changes
+exactly **one** field from this baseline (enforced by
+`tests/test_sweep_config_finetune.py`); `combined` is the deliberate exception.
+
+| Lever | Values | Configs |
+|---|---|---|
+| `baseline` | — | 1 |
+| `batch_size` | 4, 8, 16, 32 | 4 |
+| `seq_len` | 256, 512, 1024, 2048 | 4 |
+| `lora_rank` | 4, 8, 16, 64 | 4 |
+| `checkpointing` | off, on | 2 |
+| `adapter_placement` | all, upper-11, upper-6, upper-3 | 4 |
+| `base_precision` | bf16, fp32 (+ int8/int4 if `bitsandbytes` is installed) | 2 |
+| `combined` | baseline / adam8bit / checkpointing / both, all at batch 32 × seq 2,048 | 4 (2 without bitsandbytes) |
+
+**25 total** (**23** without `bitsandbytes` — `benchmark_finetune.py` detects this at
+startup and skips the `adam8bit` and INT8/INT4 rows automatically, no crash).
+
+### CLI flags (`benchmark_finetune.py`)
+
+| Flag | Default | Purpose |
+|---|---|---|
+| `--smoke-test` | off | one tiny config (batch 2, seq 128, still loads TinyLlama), <2 min |
+| `--batch-values` | `4,8,16,32` | batch sweep list |
+| `--seq-values` | `256,512,1024,2048` | seq_len sweep list |
+| `--rank-values` | `4,8,16,64` | LoRA rank sweep list |
+| `--checkpointing-values` | `False,True` | checkpointing sweep list |
+| `--placement-values` | `all,upper-11,upper-6,upper-3` | adapter placement sweep list |
+| `--base-precision-values` | `bf16,fp32` | base storage precision sweep list |
+| `--output` | `results_finetune.csv` | where the CSV lands |
+| `--timeout` | 900 | seconds allowed per config subprocess |
+| `--child '<json>'` | — | internal; don't pass by hand |
+
+### `results_finetune.csv` columns
+
+Config fields (`base_model_name`, `base_storage_precision`, `lora_rank`,
+`lora_target_modules`, `lora_adapter_layers`, `batch`, `seq_len`, `precision`,
+`optimizer`, `checkpointing`, `steps`) + `lever`/`lever_value`, then:
+
+- **Architecture** (derived from the loaded base, not overridden): `hidden_size`,
+  `num_hidden_layers`, `num_attention_heads`, `num_key_value_heads`,
+  `intermediate_size`, `vocab_size`, `n_layers_needing_backward`.
+- **Param counts**: `n_frozen_params`, `n_trainable_params`.
+- **Predicted** (`predictions_finetune.py`): `predicted_frozen_weights_gb`,
+  `predicted_adapter_weights_gb`, `predicted_gradients_gb`, `predicted_optimizer_gb`,
+  `predicted_autocast_weight_cache_gb`, `predicted_activations_gb`,
+  `predicted_allocated_gb`, `predicted_reserved_gb`, `predicted_oom`.
+- **Measured, direct** (`memory_accounting_finetune.py` + `train_finetune.py`):
+  `measured_param_bytes`, `measured_frozen_param_bytes`,
+  `measured_trainable_param_bytes`, `measured_grad_bytes`, `measured_optimizer_bytes`,
+  `alloc_after_model_gb`, `alloc_after_optimizer_gb`, `peak_forward_gb`,
+  `measured_activations_gb`.
+- **Measured, peak**: `max_allocated_gb`, `max_reserved_gb`, `ratio`, `oom`.
+- **Timing**: `wall_time_s`, `step_time_mean_ms`, `step_time_median_ms`, `final_loss`.
+
+Same conventions as Article 1's CSV: `oom=True` is a valid finding, not a failure;
+`ERROR` in memory columns means the child crashed for a reason other than OOM.
+`lora_target_modules` is serialized as a `|`-joined string.
+
+### No GPU needed (formulas, sweep enumeration, charts)
+
+```bash
+cd benchmark
+pip install -r ../requirements.txt          # torch, pandas, matplotlib
+# NOTE: transformers/peft NOT needed for the CPU-only test suite. The tests use hand-
+# rolled stand-ins for the LoRA structure so they run without pulling ~1 GB of HF deps.
+python -m unittest discover -s tests
+python plot_finetune_results.py --input fixtures/results_finetune_sample.csv --outdir /tmp/charts_ft
+python validate_finetune_results.py --input fixtures/results_finetune_sample.csv
+```
+
+### GPU (the real thing)
+
+Full step-by-step is in `RUNBOOK.md` § "Fine-tuning sweep" (F1–F9). Short version:
+
+```bash
+cd benchmark
+python benchmark_finetune.py --smoke-test                              # <2 min sanity check
+python benchmark_finetune.py --output results_finetune.csv             # full sweep, ~25-40 min on A100 80GB
+python plot_finetune_results.py --input results_finetune.csv --outdir charts_finetune/
+python validate_finetune_results.py --input results_finetune.csv
+python debug_finetune.py > debug_finetune_out.json                     # optional; allocator-history diagnostic
+```
+

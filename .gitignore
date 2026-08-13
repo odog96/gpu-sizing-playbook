@@ -5,8 +5,21 @@ __pycache__
 .*
 !.gitignore
 !.experiments
+# .claude/ (subagents, settings, worktrees) is local tooling -- not for version
+# control. Keep the whole directory out.
+# CLAUDE.md is Claude Code's per-repo guidance file -- same treatment.
+CLAUDE.md
 creds.txt
 benchmark/results.csv
+benchmark/results_finetune.csv
 benchmark/sweep_log.txt
+benchmark/sweep_finetune_log.txt
 benchmark/charts/
+benchmark/charts_finetune/
 runs/
+*.pdf
+# Slide decks (Article 1's decks live outside the repo -- their generator was lost
+# once; not repeating that. The decks are yours to manage separately.)
+*.pptx
+# Office lock files
+~$*

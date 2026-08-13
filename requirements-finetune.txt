@@ -1,0 +1,11 @@
+# Fine-tune benchmark dependencies -- kept separate from requirements.txt so Article 1's
+# training benchmark doesn't inherit the Hugging Face stack.
+#
+# None of these are proxy-sensitive; bitsandbytes (int8/int4 base storage) stays in
+# requirements-optional.txt with its own parent-startup gate in benchmark_finetune.py.
+
+transformers>=4.44   # Loads TinyLlama-1.1B and returns HF causal-LM outputs (used by train_finetune.py)
+peft>=0.11           # LoRA adapter injection; provides LoraConfig(layers_to_transform=...) for upper-N placement
+huggingface_hub>=0.24  # from_pretrained downloads TinyLlama; imported transitively by transformers
+accelerate>=0.33     # Required by transformers' from_pretrained on some paths (torch_dtype loading, device placement)
+sentencepiece        # TinyLlama's tokenizer -- pulled by from_pretrained even if we never tokenize (config load path)

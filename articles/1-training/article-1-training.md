@@ -24,7 +24,7 @@ The first three line items are static. They do not change whether your batch siz
 
 ## The line items, the levers, and what the levers cost
 
-All figures below use one worked configuration, carried through the whole article: **1.01 billion parameters, 20 layers, hidden dimension 2,048, 16 attention heads, feed-forward width 4× the hidden dimension, output vocabulary 1,000, sequence length 100 tokens, batch size 256 examples, BF16 mixed precision (BF16 compute, FP32 storage), standard Adam optimizer.** Figures labeled *measured* come from a 24-configuration benchmark of this model on an H100 80GB — see the note on measurement at the end. Unlabeled figures in tables are calculated.
+All figures below use one worked configuration, carried through the whole article: **1.01 billion parameters, 20 layers, hidden dimension 2,048, 16 attention heads, feed-forward width 4× the hidden dimension, output vocabulary 1,000, sequence length 100 tokens, batch size 256 examples, BF16 mixed precision (BF16 compute, FP32 storage), standard Adam optimizer.** *(Sequence length 100 here is a demonstration choice that isolates the memory phenomena at small scale; production training and fine-tuning runs typically use 512–4,096 tokens.)* Figures labeled *measured* come from a 24-configuration benchmark of this model on an H100 80GB — see the note on measurement at the end. Unlabeled figures in tables are calculated.
 
 | Line item | Memory (calculated) | Levers to reduce it | What the lever costs you |
 | :---- | :---- | :---- | :---- |

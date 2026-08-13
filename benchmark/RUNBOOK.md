@@ -239,3 +239,187 @@ than fit to make numbers match.
 
 Pull `results.csv` and the `charts/` directory back for the article; everything else
 in `benchmark/` is source.
+
+---
+
+# Fine-tuning sweep
+
+Everything above sizes **training** (Article 1). This section sizes **LoRA fine-tuning**
+on a frozen bf16 base (Article 2). Same benchmark discipline — subprocess per config,
+direct tensor measurement, sweeps one lever at a time from a fixed baseline — but a
+different orchestrator (`benchmark_finetune.py`), different sweep (`sweep_config_finetune.py`),
+different formulas (`predictions_finetune.py`), and a different CSV column set.
+Target hardware for the first-pass sweep is **A100 80 GB**; H100 80 GB is a possible
+second run.
+
+The primary runner is a Cloudera AI (CAI) session. The SSH-based
+`run_finetune_sweep_remote.sh` is retained as an appendix fallback but is not the
+recommended path.
+
+Run these steps in order, in a JupyterLab terminal on the CAI session with the A100 80GB.
+
+## F1. Confirm the GPU is visible
+
+Same check as step 1 above:
+
+```bash
+nvidia-smi
+python -c "import torch; print(torch.__version__, torch.cuda.is_available(), torch.cuda.get_device_name(0))"
+```
+
+**Expect:** one A100 80GB with ~0 MB used. If `torch.cuda.is_available()` is `False`,
+resolve that before continuing — no step below will work.
+
+## F2. Clone (or `git pull`) and install fine-tune dependencies
+
+```bash
+# From a fresh terminal, outside benchmark/:
+cd ~
+git clone https://github.com/odog96/gpu-sizing-playbook.git
+# Or: cd ~/gpu-sizing-playbook && git pull --ff-only
+
+cd ~/gpu-sizing-playbook
+pip install -r requirements.txt
+pip install -r requirements-finetune.txt
+```
+
+**Expect:** installs complete without error. `requirements-finetune.txt` adds
+`transformers`, `peft`, `huggingface_hub`, `accelerate`, and `sentencepiece` — none
+proxy-sensitive.
+
+**If you also want `bitsandbytes`** (enables `adam8bit` optimizer rows and INT8/INT4
+`base_precision` rows — proxy-sensitive, kept out of the base install):
+
+```bash
+pip install -r requirements-optional.txt
+```
+
+`benchmark_finetune.py` detects a missing `bitsandbytes` at startup and skips those
+rows automatically — a failed install here just gives you a shorter sweep, not a crash.
+
+## F3. Verify the base model can be pulled
+
+TinyLlama-1.1B is ungated (no license click-through) but the first `from_pretrained`
+call still needs network access to Hugging Face. Verify that works before committing
+to the full sweep:
+
+```bash
+python -c "from transformers import AutoConfig; c = AutoConfig.from_pretrained('TinyLlama/TinyLlama-1.1B-intermediate-step-1431k-3T'); print(c.num_hidden_layers, c.hidden_size, c.num_key_value_heads, c.intermediate_size)"
+```
+
+**Expect:** `22 2048 4 5632`. If it fails, you have a Hugging Face connectivity
+problem, not a benchmark problem — resolve that before F4.
+
+## F4. Fine-tune smoke test
+
+One tiny config (batch 2, seq 128) that still loads TinyLlama-1.1B — proves the whole
+pipeline works end-to-end before committing to the full sweep:
+
+```bash
+cd benchmark
+python benchmark_finetune.py --smoke-test --output /tmp/smoke_finetune.csv
+```
+
+**Expect:** finishes in under 2 minutes (most of that is the base model download and
+CUDA context init on first run). Output ends with a one-row summary.
+
+**If it fails on OOM** at 2/128 with 80 GB free: something is wrong with the load path,
+not the memory arithmetic — this config is a few GB total.
+
+## F5. Full fine-tune sweep
+
+```bash
+python benchmark_finetune.py --output results_finetune.csv 2>&1 | tee sweep_finetune_log.txt
+```
+
+**Configs run by default:** 25 rows total (23 without `bitsandbytes` — the two
+adam8bit rows in `combined` are auto-skipped). One baseline, 4 batch, 4 seq, 4 rank,
+2 checkpointing, 4 adapter placement, 2 base precision, 4 combined.
+
+**Expected runtime on A100 80 GB:** roughly 25–40 minutes. The two checkpointed
+combined rows are the slowest (checkpointing adds ~30% step time; the demanding-corner
+batch × seq is the largest).
+
+**Expected OOMs — don't treat these as failures:**
+
+- `combined=baseline` and `combined=adam8bit` at batch 32 × seq 2,048 with no
+  checkpointing — the activation term predicts ~120 GB, well past the card.
+- `seq_len=2048` on its own at batch 8 fits (predicted ~32 GB); `combined` OOMs
+  because it also raises the batch to 32.
+
+Every OOM prints `[child] OOM at <lever>=<value>: ...` to stderr, writes
+`oom=True` in `results_finetune.csv` with memory columns set to `OOM`, and the sweep
+keeps going — same behavior as `benchmark.py`.
+
+## F6. Charts
+
+```bash
+python plot_finetune_results.py --input results_finetune.csv --outdir charts_finetune/
+```
+
+**Expect:** finishes in a few seconds (no GPU). Produces five fine-tune-specific
+charts as PNG + SVG:
+
+- `adapter_placement.{png,svg}` — the backward-reach story.
+- `rank_flatness.{png,svg}` — two-panel; static columns grow linearly, activations
+  are flat.
+- `predicted_vs_measured.{png,svg}` — scatter colored by lever, ±10% band shaded.
+- `autocast_cache_residual.{png,svg}` — the "bf16 base collapses Article 1's cache"
+  story.
+- `component_stack.{png,svg}` — which line item moves under each lever.
+
+## F7. Validate
+
+```bash
+python validate_finetune_results.py --input results_finetune.csv
+```
+
+**Acceptance bar:** ≤10% error on `max_allocated_gb` for every non-OOM row, and a
+correct OOM call on every row. Same rules as Article 1's validator; different columns.
+
+**If a row fails:** the formula in `predictions_finetune.py` is off for that config —
+diagnostic, not a script bug. First-pass sweeps often find one or two rows that miss,
+and those become the second-pass fixture for the next formula iteration.
+
+## F8. Optional allocator-history diagnostic
+
+Answers three empirical questions the article's claims rest on:
+
+```bash
+python debug_finetune.py > debug_finetune_out.json
+```
+
+**Probes:**
+1. Per-layer working-set decomposition at baseline (confirms the SwiGLU/GQA term
+   structure).
+2. Autocast-cache residual under bf16 base (compares to Article 1's ~2 GB).
+3. Adapter-placement backward reach (asserts frozen lower layers get no gradient).
+
+Commit the resulting `debug_finetune_out.json` alongside `results_finetune.csv` in
+`benchmark/reference-run-finetune/` if the sweep validates; that becomes the tracked
+evidence for Article 2's claims, mirroring `benchmark/reference-run/` for Article 1.
+
+## F9. Where output lands
+
+- `benchmark/results_finetune.csv` — full sweep data
+- `benchmark/sweep_finetune_log.txt` — console log from F5
+- `benchmark/charts_finetune/*.{png,svg}` — the five charts
+- `benchmark/debug_finetune_out.json` — allocator-history diagnostic (if you ran F8)
+
+Pull `results_finetune.csv` and `charts_finetune/` back for Phase B; everything else
+in `benchmark/` is source.
+
+## Appendix: SSH-based fallback runner
+
+Not the recommended path — kept only for environments without CAI. From a workstation
+with SSH access to a GPU host:
+
+```bash
+./run_finetune_sweep_remote.sh <user@host> <run-label>
+```
+
+That script mirrors `run_sweep_remote.sh`: 4-phase SSH-based flow that clones, installs,
+runs the smoke test + full sweep + charts + validate, then `scp`s
+`results_finetune.csv`, `sweep_finetune_log.txt`, and `charts_finetune/` back into
+`runs/<label>-finetune/` locally. Prefer F1–F9 above in a CAI session.
+
