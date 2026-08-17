@@ -10,6 +10,10 @@ __pycache__
 # CLAUDE.md is Claude Code's per-repo guidance file -- same treatment.
 CLAUDE.md
 creds.txt
+# Local operator note for the interim Nebius H100 runner. Names an external
+# vendor and will drift as their console changes -- keep out of git. Delete
+# the file entirely once training moves to Cloudera AI.
+NEBIUS_PLAYBOOK.md
 benchmark/results.csv
 benchmark/results_finetune.csv
 benchmark/sweep_log.txt
