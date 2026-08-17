@@ -217,6 +217,24 @@ class TestLineItemsAndOomPrediction(unittest.TestCase):
         self.assertEqual(result["cublas_workspace"], 132_022)
         self.assertEqual(result["allocated_total"], 2_811_222)
 
+    def test_checkpointing_zeroes_cublas_workspace_line_item(self):
+        # Under gradient checkpointing the allocator repeatedly hits its cap during
+        # backward-recompute, forcing cuBLAS to release its cached workspaces between
+        # segments. The 2026-08-17 v2 H100 sweep read this as ~zero at peak -- keeping
+        # the full non-checkpointed workspace count over-predicted the three checkpointed
+        # rows by 36% and 72%. Zeroing it lands them at +2.8%, +8.1%, +8.1%. Empirical,
+        # documented in the same paragraph as CUDA_CONTEXT_OVERHEAD_GB.
+        args = dict(SMALL)
+        args["checkpointing"] = True
+        result = predict_line_items_finetune(**args)
+        self.assertEqual(result["cublas_workspace"], 0)
+
+    def test_non_checkpointing_keeps_cublas_workspace_line_item(self):
+        # Sanity: the zeroing only fires under checkpointing. Non-checkpointed configs
+        # keep the fitted K = 4.316 + 1.871 * L_bwd workspaces.
+        result = predict_line_items_finetune(**SMALL)
+        self.assertEqual(result["cublas_workspace"], 132_022)
+
     def test_reserved_adds_context_and_fragmentation(self):
         result = predict_line_items_finetune(**SMALL)
         gap = result["reserved_total"] - result["allocated_total"]

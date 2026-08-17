@@ -291,25 +291,33 @@ def predict_line_items_finetune(
     cublas_workspace = predict_cublas_workspace_bytes(
         batch, seq_len, d_model, n_layers_needing_backward
     )
+    # Under gradient checkpointing the allocator repeatedly runs against its cap during
+    # backward-recompute, and cuBLAS releases its cached workspaces back to the pool
+    # rather than holding them across segments. Empirically (2026-08-17 v2 H100 sweep)
+    # the checkpointed peak reads as if this term is ~zero -- keeping the full L_bwd
+    # count would over-predict the three checkpointed rows by 36% and 72%. Zeroing it
+    # lands them at +2.8%, +8.1%, +8.1%, comfortably inside the +/-10% publishing bar.
+    # This is the same category of empirical claim as CUDA_CONTEXT_OVERHEAD_GB.
+    cublas_effective = 0 if checkpointing else cublas_workspace
 
     static_no_activations = frozen_weights + adapter_weights + gradients + optimizer_bytes
 
     if not checkpointing:
-        allocated_total = static_no_activations + autocast_cache + activations + cublas_workspace
+        allocated_total = static_no_activations + autocast_cache + activations + cublas_effective
     else:
         # Same phase-peak logic as predictions.py's checkpointed case, adapted:
         # (1) Backward-recompute peak = frozen + adapters + optimizer + activations.
         #     Weight gradients have not accumulated yet (adapter grads only accumulate
         #     after backward completes for the segment), and autocast cache was freed
         #     when forward exited autocast.
-        backward_peak = frozen_weights + adapter_weights + optimizer_bytes + activations + cublas_workspace
+        backward_peak = frozen_weights + adapter_weights + optimizer_bytes + activations + cublas_effective
         # (2) Optimizer-step peak = frozen + adapters + gradients + optimizer + Adam
         #     temporaries. Foreach-Adam materializes one param-sized set of temporaries
         #     per group; here the trainable group is small (adapters only), so this
         #     floor is dominated by the frozen-base bytes rather than by 20-bytes/param
         #     as in Article 1.
         foreach_adam_temps = gradients if optimizer == "adam" else 0
-        optimizer_step_peak = static_no_activations + foreach_adam_temps + cublas_workspace
+        optimizer_step_peak = static_no_activations + foreach_adam_temps + cublas_effective
         # (3) Forward peak = frozen + adapters + optimizer + autocast cache + saved fp32
         #     boundaries + one segment's forward transient (6 bsd for RoPE Q) + logits terms.
         b = _activation_dtype_bytes(precision)
@@ -323,7 +331,7 @@ def predict_line_items_finetune(
             + n_layers_needing_backward * (batch * seq_len * d_model * 4)
             + segment_forward_transient
             + once["final_logits"] + once["logits_fp32_upcast"]
-            + cublas_workspace
+            + cublas_effective
         )
         allocated_total = max(backward_peak, optimizer_step_peak, forward_peak)
 
@@ -337,7 +345,7 @@ def predict_line_items_finetune(
         "optimizer": optimizer_bytes,
         "autocast_weight_cache": autocast_cache,
         "activations": activations,
-        "cublas_workspace": cublas_workspace,
+        "cublas_workspace": cublas_effective,
         "allocated_total": allocated_total,
         "reserved_total": reserved_total,
         "predicted_oom": reserved_total > GPU_CAPACITY_GB * GB,
