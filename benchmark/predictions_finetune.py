@@ -69,6 +69,31 @@ def predict_adapter_optimizer_bytes(n_adapter, optimizer):
     return n_adapter * 8
 
 
+# --- cuBLAS workspace ---
+# Empirical: cuBLAS handles allocate GEMM workspace lazily per unique matmul shape and
+# cache it in the handle. The total count breaks into two components: a fixed base-model
+# contribution (base-model GEMMs run every forward regardless of adapter placement) and
+# a per-adapter-layer contribution (adapter-layer backward GEMMs accumulate additional
+# workspace entries proportional to L_bwd). Fit from the 2026-08-17 H100 sweep across 20
+# non-OOM, non-checkpointing rows; OLS on the four adapter-placement rows (L_bwd = 3, 6,
+# 11, 22) gives the two-component model below, which matches K = 45.5 at the all-22-layer
+# baseline and scales cleanly down to K = 9.9 at upper-3. Each workspace buffer is sized
+# at batch × seq × d × 4 bytes (32 MiB at the baseline geometry).
+CUBLAS_BASE_WORKSPACE_COUNT = 4.316        # fixed for base-model GEMM shapes
+CUBLAS_PER_ADAPTER_LAYER_WORKSPACE_COUNT = 1.871  # per layer with active adapters
+
+
+def predict_cublas_workspace_bytes(batch, seq_len, d_model, n_layers_needing_backward):
+    """cuBLAS GEMM workspace buffers cached inside the CUDA context per matmul shape.
+
+    Two-component count: a fixed base-model term plus a per-adapter-layer term that
+    tracks the backward-active adapter GEMMs whose workspace entries grow with L_bwd.
+    """
+    count = (CUBLAS_BASE_WORKSPACE_COUNT
+             + CUBLAS_PER_ADAPTER_LAYER_WORKSPACE_COUNT * n_layers_needing_backward)
+    return int(count * batch * seq_len * d_model * 4)
+
+
 def predict_autocast_weight_cache_bytes(n_base, n_adapter, precision, base_storage_precision):
     """Under bf16 autocast PyTorch caches a bf16 copy of each fp32 weight it casts on the
     fly. When the base is loaded at bf16 storage directly there is nothing to cast for the
@@ -92,12 +117,14 @@ def _per_layer_working_set_bytes(batch, seq_len, d_model, num_heads, num_kv_head
 
     Terms (each explainable in one sentence):
 
-      Attention block saves 5 same-shape B*S*d bf16 tensors -- the pre-norm residual,
-      the post-RMSNorm input to Q/K/V, Q, the attention output, and the input to o_proj
-      -- plus 2 GQA-narrowed B*S*(d*num_kv_heads/num_heads) tensors for K and V. The full
-      seq x seq attention probability matrix is deliberately zeroed here: transformers
-      dispatches SDPA/flash by default, so it is never materialized. If a base is loaded
-      that forces eager attention, add back batch*num_heads*seq_len^2*activation_bytes.
+      Attention block saves 6 same-shape B*S*d bf16 tensors -- the pre-norm residual,
+      the post-RMSNorm input to Q/K/V, Q input to apply_rotary_pos_emb, Q post-RoPE
+      (HF LLaMA's apply_rotary_pos_emb returns Q as a fresh tensor), the attention output,
+      and the input to o_proj -- plus 2 GQA-narrowed B*S*(d*num_kv_heads/num_heads)
+      tensors for K and V. The full seq x seq attention probability matrix is deliberately
+      zeroed here: transformers dispatches SDPA/flash by default, so it is never
+      materialized. If a base is loaded that forces eager attention, add back
+      batch*num_heads*seq_len^2*activation_bytes.
 
       SwiGLU MLP saves 1 pre-norm B*S*d, 1 post-norm B*S*d that feeds gate_proj and
       up_proj, and 4 same-shape B*S*intermediate_size tensors (gate_proj output for the
@@ -114,7 +141,7 @@ def _per_layer_working_set_bytes(batch, seq_len, d_model, num_heads, num_kv_head
     bsd_kv = batch * seq_len * (d_model * num_kv_heads / num_heads) * activation_bytes
     bsi = batch * seq_len * ff_intermediate * activation_bytes
 
-    attn_full_width = 5 * bsd
+    attn_full_width = 6 * bsd
     attn_kv = 2 * bsd_kv
     mlp_prenorm = 2 * bsd
     mlp_hidden = 4 * bsi
@@ -134,17 +161,22 @@ def _per_layer_working_set_bytes(batch, seq_len, d_model, num_heads, num_kv_head
 
 
 def _once_per_model_bytes(batch, seq_len, d_model, vocab, precision, activation_bytes):
-    """Terms that exist once per forward pass, not once per layer."""
+    """Terms that exist once per forward/backward pass, not once per layer."""
     embedding_output = batch * seq_len * d_model * activation_bytes
     final_logits = batch * seq_len * vocab * activation_bytes
     # cross_entropy is on autocast's forced-fp32 list for numerical stability, so under
     # amp_bf16 it upcasts the logits internally, materializing a second, fp32-sized copy.
     # fp32 mode has no autocast, so no separate upcast copy.
     logits_fp32_upcast = batch * seq_len * vocab * 4 if precision == "amp_bf16" else 0
+    # cross_entropy backward keeps 2 additional fp32 vocab-width tensors live at the
+    # backward peak: the saved log-softmax output and a working copy used to compute the
+    # gradient w.r.t. the logits. Both are fp32 (they derive from the fp32 upcast above).
+    ce_backward_fp32 = 2 * batch * seq_len * vocab * 4 if precision == "amp_bf16" else 0
     return {
         "embedding_output": embedding_output,
         "final_logits": final_logits,
         "logits_fp32_upcast": logits_fp32_upcast,
+        "ce_backward_fp32": ce_backward_fp32,
     }
 
 
@@ -210,14 +242,18 @@ def predict_activation_bytes(batch, seq_len, d_model, n_layers_needing_backward,
     bsd = batch * seq_len * d_model * b
     bsd_kv = batch * seq_len * (d_model * num_kv_heads / num_heads) * b
     bsi = batch * seq_len * ff_intermediate * b
-    # One segment's forward transients under recomputation: attention block (5 bsd + 2 bsd_kv)
-    # plus SwiGLU MLP hidden set (4 bsi). The prenorm and boundary terms are already
-    # accounted for in saved_boundaries.
-    recompute_working_set = 5 * bsd + 2 * bsd_kv + 4 * bsi
+    # One segment's forward transients under recomputation: attention block (6 bsd + 2 bsd_kv,
+    # including the RoPE Q fresh tensor) plus SwiGLU MLP hidden set (4 bsi). The prenorm
+    # and boundary terms are already accounted for in saved_boundaries.
+    recompute_working_set = 6 * bsd + 2 * bsd_kv + 4 * bsi
 
     dropout_mask = batch * seq_len * d_model if dropout_p > 0 else 0
     live_logits = batch * seq_len * vocab * b
-    return int(saved_boundaries + recompute_working_set + dropout_mask + live_logits)
+    # CE backward keeps 2 fp32 vocab-width tensors live at the backward peak (same as
+    # non-checkpointed path; checkpointing doesn't skip the CE backward computation).
+    ce_backward_fp32 = once.get("ce_backward_fp32", 0)
+    return int(saved_boundaries + recompute_working_set + dropout_mask + live_logits
+               + ce_backward_fp32)
 
 
 # --- Overhead terms; see predictions.py for the full narrative. Initial values copied
@@ -252,38 +288,42 @@ def predict_line_items_finetune(
         num_heads, num_kv_heads, ff_intermediate, vocab,
         precision, checkpointing, dropout_p,
     )
+    cublas_workspace = predict_cublas_workspace_bytes(
+        batch, seq_len, d_model, n_layers_needing_backward
+    )
 
     static_no_activations = frozen_weights + adapter_weights + gradients + optimizer_bytes
 
     if not checkpointing:
-        allocated_total = static_no_activations + autocast_cache + activations
+        allocated_total = static_no_activations + autocast_cache + activations + cublas_workspace
     else:
         # Same phase-peak logic as predictions.py's checkpointed case, adapted:
         # (1) Backward-recompute peak = frozen + adapters + optimizer + activations.
         #     Weight gradients have not accumulated yet (adapter grads only accumulate
         #     after backward completes for the segment), and autocast cache was freed
         #     when forward exited autocast.
-        backward_peak = frozen_weights + adapter_weights + optimizer_bytes + activations
+        backward_peak = frozen_weights + adapter_weights + optimizer_bytes + activations + cublas_workspace
         # (2) Optimizer-step peak = frozen + adapters + gradients + optimizer + Adam
         #     temporaries. Foreach-Adam materializes one param-sized set of temporaries
         #     per group; here the trainable group is small (adapters only), so this
         #     floor is dominated by the frozen-base bytes rather than by 20-bytes/param
         #     as in Article 1.
         foreach_adam_temps = gradients if optimizer == "adam" else 0
-        optimizer_step_peak = static_no_activations + foreach_adam_temps
+        optimizer_step_peak = static_no_activations + foreach_adam_temps + cublas_workspace
         # (3) Forward peak = frozen + adapters + optimizer + autocast cache + saved fp32
-        #     boundaries + one segment's forward transient + logits terms.
+        #     boundaries + one segment's forward transient (6 bsd for RoPE Q) + logits terms.
         b = _activation_dtype_bytes(precision)
         bsi = batch * seq_len * ff_intermediate * b
         bsd = batch * seq_len * d_model * b
         bsd_kv = batch * seq_len * (d_model * num_kv_heads / num_heads) * b
         once = _once_per_model_bytes(batch, seq_len, d_model, vocab, precision, b)
-        segment_forward_transient = 4 * bsi + 5 * bsd + 2 * bsd_kv
+        segment_forward_transient = 4 * bsi + 6 * bsd + 2 * bsd_kv
         forward_peak = (
             frozen_weights + adapter_weights + optimizer_bytes + autocast_cache
             + n_layers_needing_backward * (batch * seq_len * d_model * 4)
             + segment_forward_transient
             + once["final_logits"] + once["logits_fp32_upcast"]
+            + cublas_workspace
         )
         allocated_total = max(backward_peak, optimizer_step_peak, forward_peak)
 
@@ -297,6 +337,7 @@ def predict_line_items_finetune(
         "optimizer": optimizer_bytes,
         "autocast_weight_cache": autocast_cache,
         "activations": activations,
+        "cublas_workspace": cublas_workspace,
         "allocated_total": allocated_total,
         "reserved_total": reserved_total,
         "predicted_oom": reserved_total > GPU_CAPACITY_GB * GB,

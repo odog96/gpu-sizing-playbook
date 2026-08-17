@@ -36,6 +36,10 @@ def run_training_finetune(config):
 
     model, base_arch = build_finetune_model(config)
     model.to(device)
+    if config.checkpointing:
+        model.gradient_checkpointing_enable(
+            gradient_checkpointing_kwargs={"use_reentrant": False}
+        )
     model.train()
 
     n_trainable = count_trainable_params(model)

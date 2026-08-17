@@ -96,15 +96,17 @@ class TestActivationFormula(unittest.TestCase):
     def test_small_config_matches_hand_derived_per_tensor_sum(self):
         # b = 2 (amp_bf16). bsd = 2*32*64*2 = 8192; bsd_kv = 2*32*64*(1/4)*2 = 2048;
         # bsi = 2*32*256*2 = 32768.
-        # Per layer: 5*8192 + 2*2048 + 2*8192 + 4*32768 + 0 = 40960 + 4096 + 16384 + 131072 = 192512
-        # Once: embed 8192 + logits 12800 + fp32_upcast 25600 = 46592.
-        # Non-checkpointed, layers=2 -> 192512*2 + 46592 = 431616.
+        # Per layer: 6*8192 + 2*2048 + 2*8192 + 4*32768 + 0
+        #          = 49152 + 4096 + 16384 + 131072 = 200704
+        # (6 attention bsd tensors: pre-norm, post-norm, Q-in, Q-post-RoPE, attn-out, o_proj-in)
+        # Once: embed 8192 + logits 12800 + fp32_upcast 25600 + ce_backward 2*25600 = 97792.
+        # Non-checkpointed, layers=2 -> 200704*2 + 97792 = 499200.
         result = predict_activation_bytes(
             batch=2, seq_len=32, d_model=64, n_layers_needing_backward=2,
             num_heads=4, num_kv_heads=1, ff_intermediate=256, vocab=100,
             precision="amp_bf16", checkpointing=False, dropout_p=0.0,
         )
-        self.assertEqual(result, 431616)
+        self.assertEqual(result, 499200)
 
     def test_gqa_narrows_kv_projections_relative_to_mha(self):
         # Same shape but num_kv_heads == num_heads (MHA) vs num_kv_heads=1 (max GQA).
@@ -137,14 +139,16 @@ class TestActivationFormula(unittest.TestCase):
         # 4 bytes/element even under bf16 autocast, because RMSNorm and residual adds
         # run fp32.
         # (L_backward + 3) * bsd_fp32 = (2+3) * 2*32*64*4 = 5 * 16384 = 81920
-        # recompute: 5*bsd_bf16 + 2*bsd_kv_bf16 + 4*bsi_bf16 = 5*8192 + 2*2048 + 4*32768
-        #          = 40960 + 4096 + 131072 = 176128
+        # recompute: 6*bsd_bf16 + 2*bsd_kv_bf16 + 4*bsi_bf16 = 6*8192 + 2*2048 + 4*32768
+        #          = 49152 + 4096 + 131072 = 184320
+        # (6 bsd for RoPE Q fresh tensor -- same as non-checkpointed per-layer count)
         # dropout = 0, live_logits bf16 = 2*32*100*2 = 12800
-        # Total: 81920 + 176128 + 0 + 12800 = 270848
+        # ce_backward_fp32 = 2 * 2*32*100*4 = 51200
+        # Total: 81920 + 184320 + 0 + 12800 + 51200 = 330240
         result = predict_activation_bytes(
             2, 32, 64, 2, 4, 1, 256, 100, "amp_bf16", checkpointing=True, dropout_p=0.0,
         )
-        self.assertEqual(result, 270848)
+        self.assertEqual(result, 330240)
 
     def test_checkpointing_is_smaller_than_non_checkpointed(self):
         # For a wider config where activations dominate, the reduction must be real.
@@ -164,9 +168,9 @@ class TestActivationFormula(unittest.TestCase):
         half = predict_activation_bytes(
             2, 32, 64, 1, 4, 1, 256, 100, "amp_bf16", False,
         )
-        # once_per_model = 46592; per_layer = 192512; full = 192512*2 + 46592 = 431616;
-        # half = 192512*1 + 46592 = 239104. Half saves exactly one per-layer term.
-        self.assertEqual(full - half, 192512)
+        # once_per_model = 97792; per_layer = 200704; full = 200704*2 + 97792 = 499200;
+        # half = 200704*1 + 97792 = 298496. Half saves exactly one per-layer term.
+        self.assertEqual(full - half, 200704)
 
 
 class TestResolveLayersNeedingBackward(unittest.TestCase):
@@ -191,23 +195,27 @@ class TestLineItemsAndOomPrediction(unittest.TestCase):
         result = predict_line_items_finetune(**SMALL)
         for key in (
             "frozen_weights", "adapter_weights", "gradients", "optimizer",
-            "autocast_weight_cache", "activations", "allocated_total",
-            "reserved_total", "predicted_oom", "predicted_trainable_param_count",
-            "predicted_frozen_param_count", "n_layers_needing_backward",
+            "autocast_weight_cache", "activations", "cublas_workspace",
+            "allocated_total", "reserved_total", "predicted_oom",
+            "predicted_trainable_param_count", "predicted_frozen_param_count",
+            "n_layers_needing_backward",
         ):
             self.assertIn(key, result, f"missing key {key}")
 
     def test_baseline_allocated_total_composes_from_hand_derived_pieces(self):
         result = predict_line_items_finetune(**SMALL)
         # frozen 2,000,000 + adapters 40,000 + grads 40,000 + optimizer 80,000
-        # + autocast_cache 20,000 + activations 431,616 = 2,611,616 bytes
+        # + autocast_cache 20,000 + activations 499,200
+        # + cublas int((4.316 + 1.871*2) * 2*32*64*4) = int(8.058 * 16384) = 132022
+        # = 2,811,222 bytes
         self.assertEqual(result["frozen_weights"], 2_000_000)
         self.assertEqual(result["adapter_weights"], 40_000)
         self.assertEqual(result["gradients"], 40_000)
         self.assertEqual(result["optimizer"], 80_000)
         self.assertEqual(result["autocast_weight_cache"], 20_000)
-        self.assertEqual(result["activations"], 431_616)
-        self.assertEqual(result["allocated_total"], 2_611_616)
+        self.assertEqual(result["activations"], 499_200)
+        self.assertEqual(result["cublas_workspace"], 132_022)
+        self.assertEqual(result["allocated_total"], 2_811_222)
 
     def test_reserved_adds_context_and_fragmentation(self):
         result = predict_line_items_finetune(**SMALL)
