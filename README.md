@@ -21,7 +21,7 @@ Each model type maps to a set of activities. The exception is the frontier model
 The series runs the bottom row of Figure 1 in reverse. We start with training because it establishes the fundamentals — the memory line items — that fine-tuning and inference reuse. Build the full picture once, use it three times.
 
 1. **[Training](articles/1-training/article-1-training.md)** — the four line items of GPU memory: weights, gradients, optimizer states, activations. The math for a 1-billion-parameter model, and a spreadsheet to size your own runs before your first out-of-memory error.  
-2. **Fine-tuning** — where the math gets friendlier. *(coming soon)*  
+2. **[Fine-tuning](articles/2-finetuning/article-2-finetuning.md)** — what changes when only 1% of the weights are trainable. LoRA adapters, frozen base weights, and QLoRA as a hardware-tier shortcut. Companion spreadsheet at the repo root.  
 3. **Inference** — where a different memory consumer, the KV cache, takes over. *(coming soon)*
 
 Each article will ship with a working sizing tool.
