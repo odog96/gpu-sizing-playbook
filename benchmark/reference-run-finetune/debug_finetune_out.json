@@ -1,0 +1,134 @@
+[
+ {
+  "alloc_steady_gb": 2.227426304,
+  "cache_enabled": true,
+  "fwd_peak_gb": 12.2052736,
+  "alloc_after_fwd_gb": 11.6640768,
+  "bwd_peak_gb": 12.712620032,
+  "alloc_after_bwd_gb": 2.674251264,
+  "peak_composition": {
+   "replay_peak_gb": 10.485170536,
+   "buckets": [
+    {
+     "size_mb": 46.137344,
+     "count": 88,
+     "total_gb": 4.060086272,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_generic(c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType, std::optional<c10::MemoryFormat>)"
+     ]
+    },
+    {
+     "size_mb": 16.777216,
+     "count": 176,
+     "total_gb": 2.952790016,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_strided_generic(c10::ArrayRef<long>, c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType)"
+     ]
+    },
+    {
+     "size_mb": 524.288,
+     "count": 3,
+     "total_gb": 1.572864,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_generic(c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType, std::optional<c10::MemoryFormat>)"
+     ]
+    },
+    {
+     "size_mb": 33.554432,
+     "count": 45,
+     "total_gb": 1.50994944,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      ":0:at::cuda::setWorkspaceForHandle(cublasContext*, c10::cuda::CUDAStream)"
+     ]
+    },
+    {
+     "size_mb": 262.144,
+     "count": 1,
+     "total_gb": 0.262144,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_generic(c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType, std::optional<c10::MemoryFormat>)"
+     ]
+    },
+    {
+     "size_mb": 2.097152,
+     "count": 44,
+     "total_gb": 0.092274688,
+     "stack": [
+      "??:0:torch::unwind::unwind()",
+      "??:0:torch::CapturedTraceback::gather(bool, bool, bool)",
+      "memory_snapshot.cpp:0:torch::cuda::(anonymous namespace)::gather_with_cpp()",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::malloc(void**, signed char, unsigned long, CUstream_st*)",
+      ":0:c10::cuda::CUDACachingAllocator::Native::NativeCachingAllocator::allocate(unsigned long)",
+      "??:0:at::detail::empty_generic(c10::ArrayRef<long>, c10::Allocator*, c10::DispatchKeySet, c10::ScalarType, std::optional<c10::MemoryFormat>)"
+     ]
+    }
+   ],
+   "small_blocks_gb": 0.03506212
+  },
+  "probe": "per_layer_working_set",
+  "arch": {
+   "num_hidden_layers": 22,
+   "hidden_size": 2048,
+   "num_attention_heads": 32,
+   "num_key_value_heads": 4,
+   "intermediate_size": 5632,
+   "vocab_size": 32000,
+   "attention_dropout": 0.0,
+   "hidden_dropout": 0.0,
+   "n_layers_needing_backward": 22
+  }
+ },
+ {
+  "probe": "autocast_cache_residual",
+  "with_cache": {
+   "alloc_steady_gb": 2.294535168,
+   "cache_enabled": true,
+   "fwd_peak_gb": 12.238828032,
+   "alloc_after_fwd_gb": 11.697631232,
+   "bwd_peak_gb": 12.746174464,
+   "alloc_after_bwd_gb": 2.674251264
+  },
+  "without_cache": {
+   "alloc_steady_gb": 2.294535168,
+   "cache_enabled": false,
+   "fwd_peak_gb": 12.238729728,
+   "alloc_after_fwd_gb": 11.697631232,
+   "bwd_peak_gb": 12.746174464,
+   "alloc_after_bwd_gb": 2.674251264
+  },
+  "empirical_cache_gb": 9.830400000154782e-05
+ },
+ {
+  "probe": "adapter_placement_backward_reach",
+  "upper_n": 3,
+  "total_layers": 22,
+  "fwd_peak_upper3_gb": 4.855178752,
+  "lower_layers_that_unexpectedly_got_grad": [],
+  "note": "This list should be empty. If it isn't, PEFT's layers_to_transform did not stop backward reach where the formula assumes it does; the adapter_placement_sweep predictions need re-derivation."
+ }
+]

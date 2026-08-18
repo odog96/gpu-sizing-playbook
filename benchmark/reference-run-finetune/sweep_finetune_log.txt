@@ -1,0 +1,253 @@
+[1/25] baseline=baseline (batch=8 seq=512 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  74%|███████▎  | 148/201 [00:00<00:00, 1462.42it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1518.78it/s]
+  -> 12.80 GB allocated
+[2/25] batch_size=4 (batch=4 seq=512 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  76%|███████▌  | 153/201 [00:00<00:00, 1521.66it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1580.87it/s]
+  -> 7.58 GB allocated
+[3/25] batch_size=8 (batch=8 seq=512 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  75%|███████▍  | 150/201 [00:00<00:00, 1485.31it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1574.67it/s]
+  -> 12.80 GB allocated
+[4/25] batch_size=16 (batch=16 seq=512 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  79%|███████▊  | 158/201 [00:00<00:00, 1564.51it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1602.76it/s]
+  -> 23.24 GB allocated
+[5/25] batch_size=32 (batch=32 seq=512 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  78%|███████▊  | 157/201 [00:00<00:00, 1555.39it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1587.18it/s]
+  -> 44.11 GB allocated
+[6/25] seq_len=256 (batch=8 seq=256 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  74%|███████▎  | 148/201 [00:00<00:00, 1457.63it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1546.77it/s]
+  -> 7.58 GB allocated
+[7/25] seq_len=512 (batch=8 seq=512 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  77%|███████▋  | 154/201 [00:00<00:00, 1535.56it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1563.41it/s]
+  -> 12.80 GB allocated
+[8/25] seq_len=1024 (batch=8 seq=1024 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  78%|███████▊  | 157/201 [00:00<00:00, 1555.07it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1579.87it/s]
+  -> 23.24 GB allocated
+[9/25] seq_len=2048 (batch=8 seq=2048 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  78%|███████▊  | 157/201 [00:00<00:00, 1550.16it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1606.68it/s]
+  -> 44.11 GB allocated
+[10/25] lora_rank=4 (batch=8 seq=512 rank=4 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  79%|███████▊  | 158/201 [00:00<00:00, 1572.83it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1623.74it/s]
+  -> 12.75 GB allocated
+[11/25] lora_rank=8 (batch=8 seq=512 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  75%|███████▌  | 151/201 [00:00<00:00, 1490.49it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1559.78it/s]
+  -> 12.80 GB allocated
+[12/25] lora_rank=16 (batch=8 seq=512 rank=16 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  79%|███████▊  | 158/201 [00:00<00:00, 1560.57it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1612.41it/s]
+  -> 12.89 GB allocated
+[13/25] lora_rank=64 (batch=8 seq=512 rank=64 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  75%|███████▍  | 150/201 [00:00<00:00, 1482.75it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1551.10it/s]
+  -> 13.50 GB allocated
+[14/25] checkpointing=False (batch=8 seq=512 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  77%|███████▋  | 154/201 [00:00<00:00, 1510.18it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1572.28it/s]
+  -> 12.80 GB allocated
+[15/25] checkpointing=True (batch=8 seq=512 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=True)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  76%|███████▌  | 152/201 [00:00<00:00, 1519.28it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1545.29it/s]
+  | [transformers] `use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+  -> 4.58 GB allocated
+[16/25] adapter_placement=all (batch=8 seq=512 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  79%|███████▉  | 159/201 [00:00<00:00, 1556.28it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1624.93it/s]
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  -> 12.80 GB allocated
+[17/25] adapter_placement=upper-11 (batch=8 seq=512 rank=8 placement=upper-11 base=bf16 amp_bf16 adam ckpt=False)
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  70%|███████   | 141/201 [00:00<00:00, 1406.96it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1478.72it/s]
+  -> 8.50 GB allocated
+[18/25] adapter_placement=upper-6 (batch=8 seq=512 rank=8 placement=upper-6 base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  75%|███████▍  | 150/201 [00:00<00:00, 1479.84it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1547.99it/s]
+  -> 6.54 GB allocated
+[19/25] adapter_placement=upper-3 (batch=8 seq=512 rank=8 placement=upper-3 base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  77%|███████▋  | 154/201 [00:00<00:00, 1513.69it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1555.33it/s]
+  -> 5.37 GB allocated
+[20/25] base_precision=bf16 (batch=8 seq=512 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  78%|███████▊  | 156/201 [00:00<00:00, 1522.39it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1551.58it/s]
+  -> 12.80 GB allocated
+[21/25] base_precision=fp32 (batch=8 seq=512 rank=8 placement=all base=fp32 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 10379.26it/s]
+  -> 17.24 GB allocated
+[22/25] combined=baseline (batch=32 seq=2048 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  77%|███████▋  | 154/201 [00:00<00:00, 1509.38it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1541.02it/s]
+  | [W817 23:30:27.629220001 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 268435456 bytes (free: 256049152, total: 85017493504).
+  | [W817 23:30:27.629328068 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 268435456 bytes (free: 256049152, total: 85017493504).
+  | [child] OOM at combined=baseline: CUDA out of memory. Tried to allocate 256.00 MiB. GPU 0 has a total capacity of 79.18 GiB of which 244.19 MiB is free. Including non-PyTorch memory, this process has 78.93 GiB memory in use. Of the allocated memory 75.12 GiB is allocated by PyTorch, and 3.14 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+  -> OOM
+[23/25] combined=adam8bit (batch=32 seq=2048 rank=8 placement=all base=bf16 amp_bf16 adam8bit ckpt=False)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  77%|███████▋  | 154/201 [00:00<00:00, 1518.16it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1547.86it/s]
+  | [W817 23:30:34.128050583 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 268435456 bytes (free: 256049152, total: 85017493504).
+  | [W817 23:30:34.128158825 CUDACachingAllocator.cpp:3933] memory allocation failed with OOM on device 0 while trying to allocate 268435456 bytes (free: 256049152, total: 85017493504).
+  | [child] OOM at combined=adam8bit: CUDA out of memory. Tried to allocate 256.00 MiB. GPU 0 has a total capacity of 79.18 GiB of which 244.19 MiB is free. Including non-PyTorch memory, this process has 78.93 GiB memory in use. Of the allocated memory 75.12 GiB is allocated by PyTorch, and 3.14 GiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://docs.pytorch.org/docs/stable/notes/cuda.html#optimizing-memory-usage-with-pytorch-cuda-alloc-conf)
+  -> OOM
+[24/25] combined=checkpointing (batch=32 seq=2048 rank=8 placement=all base=bf16 amp_bf16 adam ckpt=True)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  74%|███████▍  | 149/201 [00:00<00:00, 1469.13it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1535.00it/s]
+  | [transformers] `use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+  -> 38.15 GB allocated
+[25/25] combined=both (batch=32 seq=2048 rank=8 placement=all base=bf16 amp_bf16 adam8bit ckpt=True)
+  | Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+  | [transformers] `torch_dtype` is deprecated! Use `dtype` instead!
+  | 
+  | Loading weights:   0%|          | 0/201 [00:00<?, ?it/s]
+  | Loading weights:  78%|███████▊  | 156/201 [00:00<00:00, 1559.55it/s]
+  | Loading weights: 100%|██████████| 201/201 [00:00<00:00, 1592.91it/s]
+  | [transformers] `use_cache=True` is incompatible with gradient checkpointing. Setting `use_cache=False`.
+  -> 38.11 GB allocated
+
+Wrote 25 rows to results_finetune.csv
+
+=== Summary (grouped by lever) ===
+
+[baseline]
+      baseline: allocated=12.80 GB  reserved=14.49 GB  predicted=12.80 GB  ratio=1.0
+
+[adapter_placement]
+           all: allocated=12.80 GB  reserved=14.49 GB  predicted=12.80 GB  ratio=1.0
+      upper-11: allocated=8.50 GB  reserved=9.46 GB  predicted=8.50 GB  ratio=1.0
+       upper-6: allocated=6.54 GB  reserved=7.40 GB  predicted=6.54 GB  ratio=1.0
+       upper-3: allocated=5.37 GB  reserved=6.16 GB  predicted=5.37 GB  ratio=1.0
+
+[base_precision]
+          bf16: allocated=12.80 GB  reserved=14.49 GB  predicted=12.80 GB  ratio=1.0
+          fp32: allocated=17.24 GB  reserved=18.55 GB  predicted=17.20 GB  ratio=1.002
+
+[batch_size]
+             4: allocated=7.58 GB  reserved=8.79 GB  predicted=7.56 GB  ratio=1.003
+             8: allocated=12.80 GB  reserved=14.49 GB  predicted=12.80 GB  ratio=1.0
+            16: allocated=23.24 GB  reserved=26.53 GB  predicted=23.28 GB  ratio=0.998
+            32: allocated=44.11 GB  reserved=50.64 GB  predicted=44.25 GB  ratio=0.997
+
+[checkpointing]
+         False: allocated=12.80 GB  reserved=14.49 GB  predicted=12.80 GB  ratio=1.0
+          True: allocated=4.58 GB  reserved=5.57 GB  predicted=4.71 GB  ratio=0.972
+
+[combined]
+      baseline: OOM  <-- NOT predicted by the formula
+      adam8bit: OOM  <-- NOT predicted by the formula
+  checkpointing: allocated=38.15 GB  reserved=52.46 GB  predicted=41.30 GB  ratio=0.924
+          both: allocated=38.11 GB  reserved=52.40 GB  predicted=41.26 GB  ratio=0.924
+
+[lora_rank]
+             4: allocated=12.75 GB  reserved=14.43 GB  predicted=12.74 GB  ratio=1.001
+             8: allocated=12.80 GB  reserved=14.49 GB  predicted=12.80 GB  ratio=1.0
+            16: allocated=12.89 GB  reserved=14.63 GB  predicted=12.91 GB  ratio=0.999
+            64: allocated=13.50 GB  reserved=14.97 GB  predicted=13.59 GB  ratio=0.993
+
+[seq_len]
+           256: allocated=7.58 GB  reserved=8.79 GB  predicted=7.56 GB  ratio=1.003
+           512: allocated=12.80 GB  reserved=14.49 GB  predicted=12.80 GB  ratio=1.0
+          1024: allocated=23.24 GB  reserved=26.54 GB  predicted=23.28 GB  ratio=0.998
+          2048: allocated=44.11 GB  reserved=50.64 GB  predicted=44.25 GB  ratio=0.997
