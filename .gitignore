@@ -27,3 +27,9 @@ runs/
 *.pptx
 # Office lock files
 ~$*
+
+# Secrets -- never commit. credentials.txt holds the Cloudera LiteLLM virtual
+# key that ~/.claude-corp/settings.json reads via apiKeyHelper (macOS keychain).
+credentials.txt
+*.key
+.env
