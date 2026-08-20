@@ -42,7 +42,7 @@ publisher: cloudera                          # TBD -- confirm publisher
 source: Internal                             # TBD -- confirm (Internal | Partner | NVIDIA Adaptation | Customer)
 
 # --- Repository & assets ---
-public_github_link: ""                       # TBD -- add public GitHub URL when the repo is published
+public_github_link: "https://github.com/odog96/gpu-sizing-playbook"
 #private_github_link: ""
 
 # --- Ownership ---
