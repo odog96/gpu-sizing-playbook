@@ -134,7 +134,7 @@ The worst prediction miss was on the two stacked-lever checkpointed configuratio
 
 **A note on measurement.** Figures labeled measured come from a 23-configuration LoRA benchmark on a single H100 80GB. The static line items are measured directly — by summing the actual bytes of every base parameter, adapter parameter, gradient, and optimizer tensor on the device — not inferred. Activations are the difference between two *measured* allocator readings. Peak-composition claims come from replaying the CUDA allocator's event history (`benchmark/debug_finetune.py`).
 
-A companion spreadsheet — `gpu-finetune-memory-sizing.xlsx` at the repo root — turns this math into a sizing tool. Plug in your base model (LLaMA-2-7B, LLaMA-3-8B, and larger presets are included), your LoRA rank and target set, your batch and sequence, and it tells you whether the job fits on the GPU you have. And whether QLoRA on a smaller card would fit it more comfortably.
+A companion spreadsheet — `assets/gpu-finetune-memory-sizing.xlsx` — turns this math into a sizing tool. Plug in your base model (LLaMA-2-7B, LLaMA-3-8B, and larger presets are included), your LoRA rank and target set, your batch and sequence, and it tells you whether the job fits on the GPU you have. And whether QLoRA on a smaller card would fit it more comfortably.
 
 ---
 

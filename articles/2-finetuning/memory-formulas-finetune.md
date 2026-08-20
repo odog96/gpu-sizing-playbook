@@ -294,7 +294,7 @@ Output cells, one line each:
 That's the sizing tool, complete. Every cell traceable to a named line item in
 §1–4; no fudge multipliers.
 
-`gpu-finetune-memory-sizing.xlsx` at the repo root implements this. It passed an
+`assets/gpu-finetune-memory-sizing.xlsx` implements this. It passed an
 audit pass on 2026-08-17 (six findings, three of them 7.8 GB-worth of blocker
 bugs, all fixed). Baseline computes 14.535 GB reserved matching
 `predict_line_items_finetune()` byte-perfect.

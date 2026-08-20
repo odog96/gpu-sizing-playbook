@@ -27,8 +27,9 @@ benchmark/
 ├── validate_results.py  checks results.csv predicted-vs-measured error and OOM calls (no GPU needed)
 ├── fixtures/
 │   └── results_sample.csv   plausible CSV (built from a real sweep's shape) for testing plot_results.py without a GPU
-├── tests/                unittest suite for everything that doesn't require a GPU (23 tests, ~5s)
-└── RUNBOOK.md             exact GPU commands, expected runtimes, expected OOMs
+└── tests/                unittest suite for everything that doesn't require a GPU (23 tests, ~5s)
+
+(GPU commands, runtimes, expected OOMs live in `../docs/benchmark-runbook.md`.)
 ```
 
 ### Module responsibilities
@@ -95,7 +96,7 @@ for restyling charts without touching a GPU.
 
 ### GPU (the real thing)
 
-Full step-by-step is in `RUNBOOK.md` — that's the authoritative reference with exact
+Full step-by-step is in `benchmark-runbook.md` — that's the authoritative reference with exact
 commands, expected runtimes, and which configs are expected to OOM. Short version:
 
 ```bash
@@ -280,7 +281,7 @@ python validate_finetune_results.py --input fixtures/results_finetune_sample.csv
 
 ### GPU (the real thing)
 
-Full step-by-step is in `RUNBOOK.md` § "Fine-tuning sweep" (F1–F9). Short version:
+Full step-by-step is in `benchmark-runbook.md` § "Fine-tuning sweep" (F1–F9). Short version:
 
 ```bash
 cd benchmark

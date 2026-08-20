@@ -7,7 +7,7 @@ that filter by requires_grad, so the fine-tune benchmark can measure the frozen 
 trainable pools separately and check the split against the analytical LoRA arithmetic.
 
 Kept in a sibling file rather than added to memory_accounting.py, per the "new sibling
-scripts, not new flags" convention (MANUAL.md § 3).
+scripts, not new flags" convention (docs/benchmark-manual.md § 3).
 """
 
 

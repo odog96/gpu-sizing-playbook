@@ -128,7 +128,7 @@ config to run a little longer than earlier versions of this benchmark — a few 
 not a step change. `results.csv` also carries more columns now: direct measurements
 (`measured_param_bytes`, `alloc_after_optimizer_gb`, `peak_forward_gb`, ...) alongside
 the predicted line items, and `predicted_allocated_gb`/`predicted_reserved_gb`/
-`predicted_oom` replace the old `predicted_total_gb`. See `MANUAL.md`'s column table
+`predicted_oom` replace the old `predicted_total_gb`. See `benchmark-manual.md`'s column table
 for the full list.
 
 **Expected runtime:** roughly 15–25 minutes total (up from the previous 17-config
@@ -253,7 +253,7 @@ Target hardware for the first-pass sweep is **A100 80 GB**; H100 80 GB is a poss
 second run.
 
 The primary runner is a Cloudera AI (CAI) session. The SSH-based
-`run_finetune_sweep_remote.sh` is retained as an appendix fallback but is not the
+`deploy/run_finetune_sweep_remote.sh` is retained as an appendix fallback but is not the
 recommended path.
 
 Run these steps in order, in a JupyterLab terminal on the CAI session with the A100 80GB.
@@ -415,10 +415,10 @@ Not the recommended path — kept only for environments without CAI. From a work
 with SSH access to a GPU host:
 
 ```bash
-./run_finetune_sweep_remote.sh <user@host> <run-label>
+./deploy/run_finetune_sweep_remote.sh <user@host> <run-label>
 ```
 
-That script mirrors `run_sweep_remote.sh`: 4-phase SSH-based flow that clones, installs,
+That script mirrors `deploy/run_sweep_remote.sh`: 4-phase SSH-based flow that clones, installs,
 runs the smoke test + full sweep + charts + validate, then `scp`s
 `results_finetune.csv`, `sweep_finetune_log.txt`, and `charts_finetune/` back into
 `runs/<label>-finetune/` locally. Prefer F1–F9 above in a CAI session.
