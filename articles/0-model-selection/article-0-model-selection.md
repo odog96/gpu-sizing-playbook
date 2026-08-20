@@ -11,7 +11,7 @@ We will be issuing an article for each area, along with a working sizing tool. B
 
 Most IT and AI teams are aware of the four model types: frontier model APIs, self-hosted open-weight models, fine-tuned open-weight models, and fully custom-trained models. What most teams lack is a clear picture of what each option demands in hardware. So they default to whichever one they already have experience with and build the justification afterward. Figure 1 lays out the four types and maps each to the activities you own — the activities this series sizes.
 
-![Figure 1: The decision chain](articles/0-model-selection/figure1.png)  
+![Figure 1: The decision chain](figure1.png)  
 Figure 1 shows the four model types, running left to right from most turnkey to most self-managed.
 
 Each model type maps to a set of activities. The exception is the frontier model API, which maps to none — it sits outside this series. The other three all require inference: any model you host, you serve. Fine-tuning applies to the fine-tuned open-weight model. Full training applies to the fully custom-trained model. These activities — training, fine-tuning, and inference — are the work this series sizes. Each gets its own article. Find your model type in Figure 1, follow its arrows, and those are the articles that apply to you.
