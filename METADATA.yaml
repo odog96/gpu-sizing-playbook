@@ -1,0 +1,54 @@
+# Cloudera Blueprint catalog metadata
+# Fields marked TBD need your review before publishing.
+
+# --- Identity ---
+name: "GPU Memory Sizing Playbook for Foundation Models"
+slug: "gpu-memory-sizing-playbook"
+description: "Line-item memory accounting for training, fine-tuning, and inference of transformer models — with formulas validated against real H100 sweeps and companion spreadsheets that turn the math into sizing decisions."
+reprise_link: ""                             # TBD -- add reprise walkthrough URL when available
+
+# --- Classification (website filters) ---
+catalog_classification:
+  - Enterprise Blueprint                     # TBD -- confirm (Enterprise Blueprint | Research | Launchable (AMP) | Developer Example)
+launchable: false                            # Playbook + benchmark, not a deployable AMP
+lifecycle_status: Active
+
+# --- Industry & alignment ---
+industry: General
+industry_alignment: "Horizontal"
+target_vertical: ""
+
+# --- Tags (website search & browse) ---
+tags:
+  - gpu
+  - memory-sizing
+  - capacity-planning
+  - foundation-models
+  - transformers
+  - training
+  - fine-tuning
+  - lora
+  - inference
+  - benchmark
+
+# --- Relationships ---
+product_mapping:                             # TBD -- confirm the Cloudera product list
+  - Cloudera Machine Learning
+  - Cloudera AI Inference Service
+# model_dependencies:                          # No model dependencies at catalog level (articles reference TinyLlama-1.1B, LLaMA-2-7B, LLaMA-3-8B as worked examples)
+
+# --- Provenance ---
+publisher: cloudera                          # TBD -- confirm publisher
+source: Internal                             # TBD -- confirm (Internal | Partner | NVIDIA Adaptation | Customer)
+
+# --- Repository & assets ---
+public_github_link: ""                       # TBD -- add public GitHub URL when the repo is published
+#private_github_link: ""
+
+# --- Ownership ---
+maintainer_name: "Oliver Zarate"
+
+# --- Dates ---
+date_created: "2026-07-31"
+date_updated: "2026-08-19"
+published_date: ""                           # TBD -- set on publish
